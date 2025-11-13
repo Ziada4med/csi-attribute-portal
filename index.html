@@ -3,20 +3,29 @@
 MODIFICATION NOTE: This file has been modified to include description fields 
 in all classification_projects table write operations.
 
+CRITICAL SECURITY FIX APPLIED:
+- Fixed saveAllCSIChanges() function to preserve existing project attributes
+- Previously: attributes_param: [] caused ALL project attributes to be DELETED
+- Now: Loads existing attributes from database before updating CSI paths
+- This prevents catastrophic data loss when admin changes CSI paths
+
 Modified Functions:
 1. saveProjectAsDraft() - Now extracts and stores division_description, section_description, 
    detailed_section_description, and item_description from dropdown values
 2. saveEditedProject() - Now passes description fields to RPC functions
 3. handleEditModalConfirmSubmit() - Now passes description fields to RPC functions
+4. saveAllCSIChanges() - CRITICAL FIX: Now preserves existing attributes during CSI path updates
 
 Changes Made:
 - Added description field extraction from "code - description" dropdown format
 - Updated insertData and updateData objects to include description fields
 - Updated admin_update_project RPC calls to include description parameters
 - Updated update_project RPC calls to include description parameters
+- FIXED CSI path management to load and preserve existing project attributes
 
 Impact: The classification_projects table will now have complete description data
 instead of just codes, improving data richness and user experience.
+CRITICAL: Prevents attribute deletion during CSI path management operations.
 
 Warning: These changes require corresponding RPC function updates in the database
 to accept the new description parameters.
@@ -173,6 +182,11 @@ to accept the new description parameters.
                     class="tab-button whitespace-nowrap py-2 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300"
                     style="display: none;">
                     User Management
+                </button>
+                <button id="tab-csi-management"
+                    class="tab-button whitespace-nowrap py-2 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    style="display: none;">
+                    CSI Path Management
                 </button>
             </nav>
         </div>
@@ -497,10 +511,10 @@ to accept the new description parameters.
                                     <div id="no-project-bar" class="bg-gray-400 transition-all duration-500" style="width: 0%"></div>
                                 </div>
                                 <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                    <span>â–  Approved</span>
-                                    <span>â–  Pending</span>
-                                    <span>â–  Draft</span>
-                                    <span>â–  No Projects</span>
+                                    <span>Ã¢â€“Â  Approved</span>
+                                    <span>Ã¢â€“Â  Pending</span>
+                                    <span>Ã¢â€“Â  Draft</span>
+                                    <span>Ã¢â€“Â  No Projects</span>
                                 </div>
                             </div>
                         </div>
@@ -589,6 +603,68 @@ to accept the new description parameters.
                     </div>
                     <div id="users-list">
                         <!-- Users will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CSI Path Management Tab (Admin only) -->
+        <div id="content-csi-management" class="tab-content" style="display: none;">
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">CSI Path Management</h3>
+                        <div class="flex space-x-3">
+                            <button id="csi-save-changes-btn" 
+                                class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed" 
+                                disabled>
+                                Save All Changes
+                            </button>
+                            <button id="csi-discard-changes-btn" 
+                                class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed" 
+                                disabled>
+                                Discard Changes
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Changes Summary -->
+                    <div id="csi-changes-summary" class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md" style="display: none;">
+                        <h4 class="font-medium text-yellow-800">Pending Changes:</h4>
+                        <div id="csi-changes-list" class="mt-1 text-sm text-yellow-700"></div>
+                    </div>
+                    
+                    <!-- Loading State -->
+                    <div id="csi-table-loading" class="text-center py-8">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        <p class="mt-2 text-gray-600">Loading projects...</p>
+                    </div>
+                    
+                    <!-- CSI Projects Table -->
+                    <div id="csi-table-container" class="overflow-x-auto" style="display: none;">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Division</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Detailed Section</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Additional Level</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Additional Value</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created By</th>
+                                </tr>
+                            </thead>
+                            <tbody id="csi-table-body" class="bg-white divide-y divide-gray-200">
+                                <!-- Table content will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- No Projects Message -->
+                    <div id="csi-no-projects" class="text-center py-8 text-gray-500" style="display: none;">
+                        <p>No projects found.</p>
                     </div>
                 </div>
             </div>
@@ -1665,6 +1741,10 @@ async function getItemDescription(itemCode) {
             // Reset UI
             document.getElementById('user-info').textContent = '';
             tabAdmin.style.display = 'none';
+            const tabCSIManagement = document.getElementById('tab-csi-management');
+            if (tabCSIManagement) {
+                tabCSIManagement.style.display = 'none';
+            }
             draftInfo.style.display = 'none';
 
             // Show login modal
@@ -1679,6 +1759,10 @@ async function getItemDescription(itemCode) {
     if (currentUser.role === 'admin') {
         tabAdmin.style.display = 'block';
         tabDashboard.style.display = 'block';
+        const tabCSIManagement = document.getElementById('tab-csi-management');
+        if (tabCSIManagement) {
+            tabCSIManagement.style.display = 'block';
+        }
         debugBtn.classList.remove('hidden');
         
         // Initialize admin features
@@ -1740,6 +1824,16 @@ async function getItemDescription(itemCode) {
                 tabAdmin.classList.add('active', 'border-blue-500', 'text-blue-600');
                 tabAdmin.classList.remove('border-transparent', 'text-gray-500');
                 loadUsers();
+            }
+            break;
+        case 'csi-management':
+            if (currentUser && currentUser.role === 'admin') {
+                const contentCSIManagement = document.getElementById('content-csi-management');
+                contentCSIManagement.style.display = 'block';
+                const tabCSIManagement = document.getElementById('tab-csi-management');
+                tabCSIManagement.classList.add('active', 'border-blue-500', 'text-blue-600');
+                tabCSIManagement.classList.remove('border-transparent', 'text-gray-500');
+                loadCSIManagementDataComplete();
             }
             break;
     }
@@ -2340,7 +2434,7 @@ function updateCollectedDataDisplay() {
             <div class="mb-6 p-4 border border-gray-200 rounded-lg bg-white">
                 <div class="mb-3">
                     <h5 class="font-medium text-gray-900">CSI Path:</h5>
-                    <p class="text-sm text-gray-600">${entry.division} â†’ ${entry.section} â†’ ${entry.subsection} â†’ ${entry.item}</p>
+                    <p class="text-sm text-gray-600">${entry.division} Ã¢â€ â€™ ${entry.section} Ã¢â€ â€™ ${entry.subsection} Ã¢â€ â€™ ${entry.item}</p>
                    ${entry.additionalLevel ? `<p class="text-sm text-gray-600">Additional Level: ${entry.additionalLevel.name} > ${entry.additionalLevel.value}</p>` : ''}
                 </div>
                 <div class="space-y-2">
@@ -4153,6 +4247,364 @@ async function populateEditModal(project, attributes) {
         throw error;
     }
 }
+
+// =========================================================
+// CSI PATH MANAGEMENT FUNCTIONS (ADMIN ONLY)
+// =========================================================
+
+// Global variables for CSI management
+let csiProjectsData = [];
+let csiPendingChanges = new Map();
+let csiHierarchyCache = {
+    divisions: [],
+    sections: {},
+    detailedSections: {},
+    items: {},
+    additionalLevels: {}
+};
+
+async function loadCSIManagementData() {
+    try {
+        // Show loading state
+        document.getElementById('csi-table-loading').style.display = 'block';
+        document.getElementById('csi-table-container').style.display = 'none';
+        document.getElementById('csi-no-projects').style.display = 'none';
+        
+        // Load all projects with user information
+        const { data: projects, error: projectsError } = await supabase
+            .from('classification_projects')
+            .select(`
+                *,
+                creator:users!classification_projects_created_by_fkey(username, email)
+            `)
+            .order('created_at', { ascending: false });
+
+        if (projectsError) throw projectsError;
+        
+        // Load CSI hierarchy options
+        await loadCSIHierarchyOptions();
+        
+        // Store projects data
+        csiProjectsData = projects || [];
+        
+        // Clear pending changes
+        csiPendingChanges.clear();
+        updateCSIChangesDisplay();
+        
+        // Render table
+        renderCSIProjectsTable();
+        
+        // Hide loading, show content
+        document.getElementById('csi-table-loading').style.display = 'none';
+        
+        if (csiProjectsData.length === 0) {
+            document.getElementById('csi-no-projects').style.display = 'block';
+        } else {
+            document.getElementById('csi-table-container').style.display = 'block';
+        }
+        
+    } catch (error) {
+        console.error('Error loading CSI management data:', error);
+        document.getElementById('csi-table-loading').style.display = 'none';
+        showMessageBox(`Failed to load projects: ${error.message}`, true);
+    }
+}
+
+async function loadCSIHierarchyOptions() {
+    try {
+        // Load divisions
+        const { data: divisions, error: divError } = await supabase.rpc('get_divisions');
+        if (divError) throw divError;
+        csiAvailableOptions.divisions = divisions || [];
+        
+        // Load all sections, detailed sections, and items for quick access
+        for (const division of csiAvailableOptions.divisions) {
+            const { data: sections } = await supabase.rpc('get_sections', { 
+                division_code_param: division.division_code 
+            });
+            csiAvailableOptions.sections.set(division.division_code, sections || []);
+            
+            for (const section of sections || []) {
+                const { data: detailedSections } = await supabase.rpc('get_detailed_sections', {
+                    division_code_param: division.division_code,
+                    section_code_param: section.section_code
+                });
+                const key = `${division.division_code}-${section.section_code}`;
+                csiAvailableOptions.detailedSections.set(key, detailedSections || []);
+                
+                for (const detailedSection of detailedSections || []) {
+                    const { data: items } = await supabase.rpc('get_items', {
+                        division_code_param: division.division_code,
+                        section_code_param: section.section_code,
+                        detailed_section_code_param: detailedSection.detailed_section_code
+                    });
+                    const itemKey = `${division.division_code}-${section.section_code}-${detailedSection.detailed_section_code}`;
+                    csiAvailableOptions.items.set(itemKey, items || []);
+                }
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error loading CSI hierarchy options:', error);
+    }
+}
+
+function renderCSIProjectsTable() {
+    const tbody = document.getElementById('csi-table-body');
+    tbody.innerHTML = '';
+    
+    if (!csiProjectsData || csiProjectsData.length === 0) {
+        return;
+    }
+    
+    csiProjectsData.forEach((project, index) => {
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-50';
+        
+        // Check if this project has pending changes
+        const hasChanges = csiPendingChanges.has(project.id);
+        const rowClass = hasChanges ? 'bg-yellow-50 border-l-4 border-yellow-400' : '';
+        if (rowClass) row.className += ' ' + rowClass;
+        
+        row.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                ${project.project_name}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                ${renderCSIDropdown('division', project, index)}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                ${renderCSIDropdown('section', project, index)}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                ${renderCSIDropdown('detailed_section', project, index)}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                ${renderCSIDropdown('item', project, index)}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <input type="text" value="${project.additional_level_name || ''}" 
+                       class="csi-input w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                       onchange="handleCSIChange('additional_level_name', this.value, ${project.id}, ${index})">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <input type="text" value="${project.additional_level_value || ''}" 
+                       class="csi-input w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                       onchange="handleCSIChange('additional_level_value', this.value, ${project.id}, ${index})">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(project.status)}">
+                    ${getStatusDisplayText(project.status)}
+                </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                ${project.creator ? project.creator.username : 'Unknown'}
+            </td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+}
+
+function renderCSIDropdown(type, project, index) {
+    let options = '';
+    let selectedValue = '';
+    
+    switch (type) {
+        case 'division':
+            selectedValue = project.division_code;
+            options = csiAvailableOptions.divisions.map(div => 
+                `<option value="${div.division_code}" ${div.division_code === selectedValue ? 'selected' : ''}>${div.division_code} - ${div.division_description}</option>`
+            ).join('');
+            break;
+            
+        case 'section':
+            selectedValue = project.section_code;
+            const divisionSections = csiAvailableOptions.sections.get(project.division_code) || [];
+            options = divisionSections.map(sec => 
+                `<option value="${sec.section_code}" ${sec.section_code === selectedValue ? 'selected' : ''}>${sec.section_code} - ${sec.section_description}</option>`
+            ).join('');
+            break;
+            
+        case 'detailed_section':
+            selectedValue = project.detailed_section_code;
+            const detailedKey = `${project.division_code}-${project.section_code}`;
+            const detailedSections = csiAvailableOptions.detailedSections.get(detailedKey) || [];
+            options = detailedSections.map(det => 
+                `<option value="${det.detailed_section_code}" ${det.detailed_section_code === selectedValue ? 'selected' : ''}>${det.detailed_section_code} - ${det.detailed_section_description}</option>`
+            ).join('');
+            break;
+            
+        case 'item':
+            selectedValue = project.item_code;
+            const itemKey = `${project.division_code}-${project.section_code}-${project.detailed_section_code}`;
+            const items = csiAvailableOptions.items.get(itemKey) || [];
+            options = items.map(item => 
+                `<option value="${item.item_code}" ${item.item_code === selectedValue ? 'selected' : ''}>${item.item_code} - ${item.item_description}</option>`
+            ).join('');
+            break;
+    }
+    
+    return `
+        <select class="csi-select w-full px-2 py-1 border border-gray-300 rounded text-sm" 
+                onchange="handleCSIChange('${type === 'detailed_section' ? 'detailed_section_code' : type + '_code'}', this.value, ${project.id}, ${index})">
+            ${options}
+        </select>
+    `;
+}
+
+function handleCSIChange(field, value, projectId, projectIndex) {
+    // Get current project data
+    const project = csiProjectsData[projectIndex];
+    
+    // Get or create pending changes for this project
+    if (!csiPendingChanges.has(projectId)) {
+        csiPendingChanges.set(projectId, { ...project });
+    }
+    
+    const pendingProject = csiPendingChanges.get(projectId);
+    pendingProject[field] = value;
+    
+    // Handle cascading changes for CSI hierarchy
+    if (field === 'division_code') {
+        // Reset lower levels when division changes
+        pendingProject.section_code = '';
+        pendingProject.detailed_section_code = '';
+        pendingProject.item_code = '';
+        pendingProject.additional_level_name = '';
+        pendingProject.additional_level_value = '';
+    } else if (field === 'section_code') {
+        // Reset lower levels when section changes
+        pendingProject.detailed_section_code = '';
+        pendingProject.item_code = '';
+        pendingProject.additional_level_name = '';
+        pendingProject.additional_level_value = '';
+    } else if (field === 'detailed_section_code') {
+        // Reset lower levels when detailed section changes
+        pendingProject.item_code = '';
+        pendingProject.additional_level_name = '';
+        pendingProject.additional_level_value = '';
+    } else if (field === 'item_code') {
+        // Reset additional levels when item changes
+        pendingProject.additional_level_name = '';
+        pendingProject.additional_level_value = '';
+    }
+    
+    // Update the project data for rendering
+    csiProjectsData[projectIndex] = { ...csiProjectsData[projectIndex], ...pendingProject };
+    
+    // Re-render the table to reflect cascading changes
+    renderCSIProjectsTable();
+    
+    // Update changes display
+    updateCSIChangesDisplay();
+}
+
+function updateCSIChangesDisplay() {
+    const changesCount = csiPendingChanges.size;
+    const summaryDiv = document.getElementById('csi-changes-summary');
+    const changesList = document.getElementById('csi-changes-list');
+    const saveBtn = document.getElementById('csi-save-changes-btn');
+    const discardBtn = document.getElementById('csi-discard-changes-btn');
+    
+    if (changesCount === 0) {
+        summaryDiv.style.display = 'none';
+        saveBtn.disabled = true;
+        discardBtn.disabled = true;
+    } else {
+        summaryDiv.style.display = 'block';
+        saveBtn.disabled = false;
+        discardBtn.disabled = false;
+        
+        let changesHTML = `<strong>${changesCount}</strong> project(s) have pending changes:<br>`;
+        
+        for (const [projectId, changes] of csiPendingChanges) {
+            const originalProject = csiProjectsData.find(p => p.id === projectId);
+            changesHTML += `<div class="mt-1">• <strong>${originalProject.project_name}</strong>: CSI path modifications</div>`;
+        }
+        
+        changesList.innerHTML = changesHTML;
+    }
+}
+
+function getStatusBadgeClass(status) {
+    const statusClasses = {
+        'draft': 'bg-gray-100 text-gray-800',
+        'submitted': 'bg-yellow-100 text-yellow-800',
+        'reviewer_approved': 'bg-blue-100 text-blue-800',
+        'reviewer_rejected': 'bg-red-100 text-red-800',
+        'admin_approved': 'bg-green-100 text-green-800',
+        'admin_rejected': 'bg-red-100 text-red-800'
+    };
+    return statusClasses[status] || 'bg-gray-100 text-gray-800';
+}
+
+function getStatusDisplayText(status) {
+    const statusTexts = {
+        'draft': 'Draft',
+        'submitted': 'Pending Review',
+        'reviewer_approved': 'Pending Admin',
+        'reviewer_rejected': 'Rejected',
+        'admin_approved': 'Approved',
+        'admin_rejected': 'Admin Rejected'
+    };
+    return statusTexts[status] || status;
+}
+
+async function saveCSIChanges() {
+    if (csiPendingChanges.size === 0) {
+        showMessageBox('No changes to save.', true);
+        return;
+    }
+    
+    try {
+        showLoadingScreen('Saving CSI path changes...', 'Processing updates');
+        
+        // Save each changed project
+        for (const [projectId, changes] of csiPendingChanges) {
+            const { error } = await supabase
+                .from('classification_projects')
+                .update({
+                    division_code: changes.division_code,
+                    section_code: changes.section_code,
+                    detailed_section_code: changes.detailed_section_code,
+                    item_code: changes.item_code,
+                    additional_level_name: changes.additional_level_name || null,
+                    additional_level_value: changes.additional_level_value || null,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', projectId);
+                
+            if (error) throw error;
+        }
+        
+        hideLoadingScreen();
+        showMessageBox(`Successfully saved ${csiPendingChanges.size} project(s) with updated CSI paths.`);
+        
+        // Clear changes and reload data
+        csiPendingChanges.clear();
+        await loadCSIManagementData();
+        
+    } catch (error) {
+        hideLoadingScreen();
+        console.error('Error saving CSI changes:', error);
+        showMessageBox(`Failed to save changes: ${error.message}`, true);
+    }
+}
+
+function discardCSIChanges() {
+    if (csiPendingChanges.size === 0) {
+        showMessageBox('No changes to discard.', true);
+        return;
+    }
+    
+    if (confirm(`Are you sure you want to discard all ${csiPendingChanges.size} pending change(s)?`)) {
+        csiPendingChanges.clear();
+        loadCSIManagementData(); // Reload original data
+        showMessageBox('All changes discarded.');
+    }
+}
+
 // USER MANAGEMENT FUNCTIONS (ADMIN ONLY) - KEPT AS-IS
         // =========================================================
 
@@ -4793,7 +5245,9 @@ async function loadEditModalLevelValues(divisionCode, sectionCode, detailedSecti
 // Helper function to setup event listeners for edit modal
 function setupEditModalEventListeners() {
     // Division change
-    document.getElementById('edit-modal-division').addEventListener('change', async function() {
+    const editModalDiv = document.getElementById('edit-modal-division');
+    if (editModalDiv) {
+        editModalDiv.addEventListener('change', async function() {
         const division = this.value;
         if (division) {
             const divisionCode = division.split(' - ')[0];
@@ -4804,10 +5258,13 @@ function setupEditModalEventListeners() {
         document.getElementById('edit-modal-subsection').innerHTML = '<option value="">Select Detailed Section</option>';
         document.getElementById('edit-modal-item').innerHTML = '<option value="">Select Item</option>';
         document.getElementById('edit-modal-level-value').innerHTML = '<option value="">Select value</option>';
-    });
+        });
+    }
     
     // Section change
-    document.getElementById('edit-modal-section').addEventListener('change', async function() {
+    const editModalSec = document.getElementById('edit-modal-section');
+    if (editModalSec) {
+        editModalSec.addEventListener('change', async function() {
         const division = document.getElementById('edit-modal-division').value;
         const section = this.value;
         if (division && section) {
@@ -4819,10 +5276,13 @@ function setupEditModalEventListeners() {
         document.getElementById('edit-modal-subsection').innerHTML = '<option value="">Select Detailed Section</option>';
         document.getElementById('edit-modal-item').innerHTML = '<option value="">Select Item</option>';
         document.getElementById('edit-modal-level-value').innerHTML = '<option value="">Select value</option>';
-    });
+        });
+    }
     
     // Subsection change
-    document.getElementById('edit-modal-subsection').addEventListener('change', async function() {
+    const editModalSub = document.getElementById('edit-modal-subsection');
+    if (editModalSub) {
+        editModalSub.addEventListener('change', async function() {
         const division = document.getElementById('edit-modal-division').value;
         const section = document.getElementById('edit-modal-section').value;
         const subsection = this.value;
@@ -4835,10 +5295,13 @@ function setupEditModalEventListeners() {
         // Reset dependent dropdowns
         document.getElementById('edit-modal-item').innerHTML = '<option value="">Select Item</option>';
         document.getElementById('edit-modal-level-value').innerHTML = '<option value="">Select value</option>';
-    });
+        });
+    }
     
     // Item change
-    document.getElementById('edit-modal-item').addEventListener('change', async function() {
+    const editModalItem = document.getElementById('edit-modal-item');
+    if (editModalItem) {
+        editModalItem.addEventListener('change', async function() {
         const division = document.getElementById('edit-modal-division').value;
         const section = document.getElementById('edit-modal-section').value;
         const subsection = document.getElementById('edit-modal-subsection').value;
@@ -4850,7 +5313,8 @@ function setupEditModalEventListeners() {
             const itemCode = item.split(' - ')[0];
             await loadEditModalLevelValues(divisionCode, sectionCode, detailedSectionCode, itemCode);
         }
-    });
+        });
+    }
 }
 
 // Helper function to display attributes in edit modal
@@ -5197,6 +5661,10 @@ function displayViewComments(project) {
         tabProjects.addEventListener('click', () => switchTab('projects'));
         tabAdmin.addEventListener('click', () => switchTab('admin'));
         tabDashboard.addEventListener('click', () => switchTab('dashboard'));
+        const tabCSIManagement = document.getElementById('tab-csi-management');
+        if (tabCSIManagement) {
+            tabCSIManagement.addEventListener('click', () => switchTab('csi-management'));
+        }
         // Projects refresh
         refreshProjectsBtn.addEventListener('click', loadUserProjects);
 
@@ -5378,6 +5846,17 @@ document.getElementById('manual-entry-checkbox').addEventListener('change', func
             hideModal(messageBoxModal);
         });
 
+        // CSI Management buttons
+        const csiSaveChangesBtn = document.getElementById('csi-save-changes-btn');
+        const csiDiscardChangesBtn = document.getElementById('csi-discard-changes-btn');
+        
+        if (csiSaveChangesBtn) {
+            csiSaveChangesBtn.addEventListener('click', saveCSIChanges);
+        }
+        if (csiDiscardChangesBtn) {
+            csiDiscardChangesBtn.addEventListener('click', discardCSIChanges);
+        }
+
 
 
 
@@ -5386,7 +5865,9 @@ document.getElementById('manual-entry-checkbox').addEventListener('change', func
 
 
 // Edit modal CSI hierarchy changes
-document.getElementById('edit-modal-division').addEventListener('change', async (e) => {
+const editModalDivision = document.getElementById('edit-modal-division');
+if (editModalDivision) {
+    editModalDivision.addEventListener('change', async (e) => {
     const divisionCode = e.target.value.split(' - ')[0];
     if (divisionCode) {
         const { data } = await supabase.rpc('get_sections', { division_code_param: divisionCode });
@@ -5402,9 +5883,12 @@ document.getElementById('edit-modal-division').addEventListener('change', async 
             });
         }
     }
-});
+    });
+}
 
-document.getElementById('edit-modal-section').addEventListener('change', async (e) => {
+const editModalSection = document.getElementById('edit-modal-section');
+if (editModalSection) {
+    editModalSection.addEventListener('change', async (e) => {
     const divisionCode = document.getElementById('edit-modal-division').value.split(' - ')[0];
     const sectionCode = e.target.value.split(' - ')[0];
     if (divisionCode && sectionCode) {
@@ -5425,8 +5909,11 @@ document.getElementById('edit-modal-section').addEventListener('change', async (
         }
     }
 });
+}
 
-document.getElementById('edit-modal-subsection').addEventListener('change', async (e) => {
+const editModalSubsection = document.getElementById('edit-modal-subsection');
+if (editModalSubsection) {
+    editModalSubsection.addEventListener('change', async (e) => {
     const divisionCode = document.getElementById('edit-modal-division').value.split(' - ')[0];
     const sectionCode = document.getElementById('edit-modal-section').value.split(' - ')[0];
     const detailedSectionCode = e.target.value.split(' - ')[0];
@@ -5449,6 +5936,7 @@ document.getElementById('edit-modal-subsection').addEventListener('change', asyn
         }
     }
 });
+}
 
        
                 
@@ -5756,6 +6244,17 @@ function setupCSIEventListeners() {
     const refreshBtn = document.getElementById('refresh-dashboard-btn');
     if (refreshBtn) {
         refreshBtn.addEventListener('click', loadAdminDashboard);
+    }
+    
+    // CSI Path Management buttons
+    const saveChangesBtn = document.getElementById('csi-save-changes-btn');
+    if (saveChangesBtn) {
+        saveChangesBtn.addEventListener('click', saveAllCSIChanges);
+    }
+    
+    const discardChangesBtn = document.getElementById('csi-discard-changes-btn');
+    if (discardChangesBtn) {
+        discardChangesBtn.addEventListener('click', discardAllCSIChanges);
     }
 }
 
@@ -6242,6 +6741,465 @@ async function loadCSIStatistics() {
         console.error('Error loading CSI statistics:', error);
     }
 }
+
+// =========================================================
+// CSI PATH MANAGEMENT FUNCTIONS
+// =========================================================
+
+async function loadCSIManagementDataComplete() {
+    try {
+        showCSILoadingState();
+        
+        // Load all projects with user information
+        const { data: projects, error: projectsError } = await supabase
+            .from('classification_projects')
+            .select(`
+                *,
+                creator:users!classification_projects_created_by_fkey(username, email),
+                reviewer:users!classification_projects_assigned_reviewer_id_fkey(username, email)
+            `)
+            .order('created_at', { ascending: false });
+
+        if (projectsError) throw projectsError;
+
+        csiProjectsData = projects || [];
+        
+        // Load CSI hierarchy for dropdowns
+        await loadCSIHierarchyCache();
+        
+        // Render the table
+        renderCSITable();
+        
+        hideCSILoadingState();
+        
+    } catch (error) {
+        console.error('Error loading CSI management data:', error);
+        hideCSILoadingState();
+        showMessageBox(`Failed to load CSI management data: ${error.message}`, true);
+    }
+}
+
+async function loadCSIHierarchyCache() {
+    try {
+        // Load divisions
+        const { data: divisions } = await supabase.rpc('get_divisions');
+        csiHierarchyCache.divisions = divisions || [];
+        
+        // Load all sections, detailed sections, and items
+        for (const division of csiHierarchyCache.divisions) {
+            const divCode = division.division_code;
+            
+            // Load sections for this division
+            const { data: sections } = await supabase.rpc('get_sections', { division_code_param: divCode });
+            csiHierarchyCache.sections[divCode] = sections || [];
+            
+            for (const section of (sections || [])) {
+                const secCode = section.section_code;
+                
+                // Load detailed sections
+                const { data: detailedSections } = await supabase.rpc('get_detailed_sections', { 
+                    division_code_param: divCode,
+                    section_code_param: secCode 
+                });
+                csiHierarchyCache.detailedSections[`${divCode}_${secCode}`] = detailedSections || [];
+                
+                for (const detailedSection of (detailedSections || [])) {
+                    const detCode = detailedSection.detailed_section_code;
+                    
+                    // Load items
+                    const { data: items } = await supabase.rpc('get_items', { 
+                        division_code_param: divCode,
+                        section_code_param: secCode,
+                        detailed_section_code_param: detCode
+                    });
+                    csiHierarchyCache.items[`${divCode}_${secCode}_${detCode}`] = items || [];
+                }
+            }
+        }
+        
+        // Load additional levels
+        const { data: additionalLevels } = await supabase
+            .from('additional_levels')
+            .select('*')
+            .order('level_name');
+        
+        // Group by CSI path
+        for (const level of (additionalLevels || [])) {
+            const key = `${level.division_code}_${level.section_code}_${level.detailed_section_code}_${level.item_code}`;
+            if (!csiHierarchyCache.additionalLevels[key]) {
+                csiHierarchyCache.additionalLevels[key] = [];
+            }
+            csiHierarchyCache.additionalLevels[key].push(level);
+        }
+        
+    } catch (error) {
+        console.error('Error loading CSI hierarchy cache:', error);
+    }
+}
+
+function renderCSITable() {
+    const tableBody = document.getElementById('csi-table-body');
+    const tableContainer = document.getElementById('csi-table-container');
+    const noProjectsDiv = document.getElementById('csi-no-projects');
+    
+    if (csiProjectsData.length === 0) {
+        tableContainer.style.display = 'none';
+        noProjectsDiv.style.display = 'block';
+        return;
+    }
+    
+    tableContainer.style.display = 'block';
+    noProjectsDiv.style.display = 'none';
+    
+    let html = '';
+    csiProjectsData.forEach((project, index) => {
+        const isChanged = csiPendingChanges.has(project.id);
+        const rowClass = isChanged ? 'bg-yellow-50' : '';
+        
+        html += `
+            <tr class="${rowClass}">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    ${project.project_name}
+                    ${isChanged ? '<span class="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Modified</span>' : ''}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    ${createCSIDropdown('division', project.id, project.division_code)}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    ${createCSIDropdown('section', project.id, project.section_code)}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    ${createCSIDropdown('detailed_section', project.id, project.detailed_section_code)}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    ${createCSIDropdown('item', project.id, project.item_code)}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <input type="text" value="${project.additional_level_name || ''}" 
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                           onchange="updateCSIField('additional_level_name', ${project.id}, this.value)">
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <input type="text" value="${project.additional_level_value || ''}" 
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                           onchange="updateCSIField('additional_level_value', ${project.id}, this.value)">
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(project.status)}">
+                        ${formatStatus(project.status)}
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    ${project.creator ? project.creator.username : 'Unknown'}
+                </td>
+            </tr>
+        `;
+    });
+    
+    tableBody.innerHTML = html;
+}
+
+function createCSIDropdown(type, projectId, currentValue) {
+    const project = csiProjectsData.find(p => p.id === projectId);
+    const changeData = csiPendingChanges.get(projectId) || {};
+    const effectiveValue = changeData[`${type}_code`] || currentValue;
+    
+    let options = [];
+    let selectId = `${type}-${projectId}`;
+    
+    switch (type) {
+        case 'division':
+            options = csiHierarchyCache.divisions.map(d => ({
+                value: d.division_code,
+                label: `${d.division_code} - ${d.division_description}`
+            }));
+            break;
+            
+        case 'section':
+            const divCode = changeData.division_code || project.division_code;
+            options = (csiHierarchyCache.sections[divCode] || []).map(s => ({
+                value: s.section_code,
+                label: `${s.section_code} - ${s.section_description}`
+            }));
+            break;
+            
+        case 'detailed_section':
+            const div = changeData.division_code || project.division_code;
+            const sec = changeData.section_code || project.section_code;
+            options = (csiHierarchyCache.detailedSections[`${div}_${sec}`] || []).map(d => ({
+                value: d.detailed_section_code,
+                label: `${d.detailed_section_code} - ${d.detailed_section_description}`
+            }));
+            break;
+            
+        case 'item':
+            const divC = changeData.division_code || project.division_code;
+            const secC = changeData.section_code || project.section_code;
+            const detC = changeData.detailed_section_code || project.detailed_section_code;
+            options = (csiHierarchyCache.items[`${divC}_${secC}_${detC}`] || []).map(i => ({
+                value: i.item_code,
+                label: `${i.item_code} - ${i.item_description}`
+            }));
+            break;
+    }
+    
+    let html = `<select class="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
+                        onchange="updateCSIDropdown('${type}', ${projectId}, this.value)">
+                    <option value="">Select ${type.replace('_', ' ')}</option>`;
+    
+    options.forEach(option => {
+        const selected = option.value === effectiveValue ? 'selected' : '';
+        html += `<option value="${option.value}" ${selected}>${option.label}</option>`;
+    });
+    
+    html += '</select>';
+    return html;
+}
+
+function updateCSIDropdown(type, projectId, value) {
+    // Get or create change record
+    let changes = csiPendingChanges.get(projectId) || {};
+    
+    // Update the field
+    changes[`${type}_code`] = value;
+    
+    // If this is a higher level change, clear lower levels
+    if (type === 'division') {
+        delete changes.section_code;
+        delete changes.detailed_section_code;
+        delete changes.item_code;
+    } else if (type === 'section') {
+        delete changes.detailed_section_code;
+        delete changes.item_code;
+    } else if (type === 'detailed_section') {
+        delete changes.item_code;
+    }
+    
+    // Store changes
+    csiPendingChanges.set(projectId, changes);
+    
+    // Re-render the table to show updated dropdowns and highlight changes
+    renderCSITable();
+    updateChangesSummary();
+    updateButtonStates();
+}
+
+function updateCSIField(fieldName, projectId, value) {
+    let changes = csiPendingChanges.get(projectId) || {};
+    changes[fieldName] = value;
+    csiPendingChanges.set(projectId, changes);
+    
+    updateChangesSummary();
+    updateButtonStates();
+}
+
+function updateChangesSummary() {
+    const summaryDiv = document.getElementById('csi-changes-summary');
+    const changesList = document.getElementById('csi-changes-list');
+    
+    if (csiPendingChanges.size === 0) {
+        summaryDiv.style.display = 'none';
+        return;
+    }
+    
+    summaryDiv.style.display = 'block';
+    let html = '';
+    
+    csiPendingChanges.forEach((changes, projectId) => {
+        const project = csiProjectsData.find(p => p.id === projectId);
+        if (!project) return;
+        
+        const changeList = Object.keys(changes).map(key => {
+            const oldValue = project[key] || '';
+            const newValue = changes[key];
+            return `${key.replace(/_/g, ' ')}: "${oldValue}" → "${newValue}"`;
+        }).join(', ');
+        
+        html += `<div class="mb-1"><strong>${project.project_name}:</strong> ${changeList}</div>`;
+    });
+    
+    changesList.innerHTML = html;
+}
+
+function updateButtonStates() {
+    const saveBtn = document.getElementById('csi-save-changes-btn');
+    const discardBtn = document.getElementById('csi-discard-changes-btn');
+    
+    const hasChanges = csiPendingChanges.size > 0;
+    
+    saveBtn.disabled = !hasChanges;
+    discardBtn.disabled = !hasChanges;
+}
+
+async function saveAllCSIChanges() {
+    if (csiPendingChanges.size === 0) {
+        showMessageBox('No changes to save.', true);
+        return;
+    }
+    
+    if (!confirm(`Are you sure you want to save ${csiPendingChanges.size} project(s) with CSI path changes? This action cannot be undone.`)) {
+        return;
+    }
+    
+    try {
+        showLoadingScreen('Saving CSI path changes...', 'Please wait');
+        
+        let successCount = 0;
+        let errorCount = 0;
+        const errors = [];
+        
+        for (const [projectId, changes] of csiPendingChanges.entries()) {
+            try {
+                const project = csiProjectsData.find(p => p.id === projectId);
+                if (!project) continue;
+                
+                // CRITICAL FIX: Load existing attributes first to prevent deletion
+                const { data: existingAttributes, error: attrError } = await supabase
+                    .from('project_attributes')
+                    .select('*')
+                    .eq('project_id', projectId);
+                
+                if (attrError) {
+                    console.error(`Failed to load attributes for project ${projectId}:`, attrError);
+                    // Continue with empty array if attributes can't be loaded
+                }
+                
+                // Format attributes for RPC function to match expected structure
+                const formattedAttributes = (existingAttributes || []).map(attr => ({
+                    name: attr.attribute_name,
+                    standardValues: attr.standard_values,
+                    isMandatory: attr.is_mandatory,
+                    unit_of_measurement: attr.unit_of_measurement
+                }));
+                
+                console.log(`Preserving ${formattedAttributes.length} attributes for project ${projectId}`);
+                
+                // Merge changes with existing project data
+                const updateData = {
+                    project_id_param: projectId,
+                    admin_id_param: currentUser.id,
+                    project_name_param: project.project_name,
+                    division_code_param: changes.division_code || project.division_code,
+                    section_code_param: changes.section_code || project.section_code,
+                    detailed_section_code_param: changes.detailed_section_code || project.detailed_section_code,
+                    item_code_param: changes.item_code || project.item_code,
+                    additional_level_name_param: changes.additional_level_name !== undefined ? changes.additional_level_name : project.additional_level_name,
+                    additional_level_value_param: changes.additional_level_value !== undefined ? changes.additional_level_value : project.additional_level_value,
+                    attributes_param: formattedAttributes // FIXED: Preserve existing attributes
+                };
+                
+                const { data, error } = await supabase.rpc('admin_update_project', updateData);
+                
+                if (error) throw error;
+                
+                if (!data.success) {
+                    throw new Error(data.message || 'Update failed');
+                }
+                
+                successCount++;
+                
+                // Update local data
+                Object.assign(project, {
+                    division_code: updateData.division_code_param,
+                    section_code: updateData.section_code_param,
+                    detailed_section_code: updateData.detailed_section_code_param,
+                    item_code: updateData.item_code_param,
+                    additional_level_name: updateData.additional_level_name_param,
+                    additional_level_value: updateData.additional_level_value_param
+                });
+                
+            } catch (error) {
+                console.error(`Error updating project ${projectId}:`, error);
+                errorCount++;
+                errors.push(`Project ${projectId}: ${error.message}`);
+            }
+        }
+        
+        // Clear pending changes
+        csiPendingChanges.clear();
+        
+        // Re-render table
+        renderCSITable();
+        updateChangesSummary();
+        updateButtonStates();
+        
+        hideLoadingScreen();
+        
+        if (errorCount > 0) {
+            showMessageBox(`Completed with ${successCount} successes and ${errorCount} errors.\n\nErrors:\n${errors.join('\n')}`, true);
+        } else {
+            showMessageBox(`Successfully updated ${successCount} project(s) while preserving all attributes.`);
+        }
+        
+    } catch (error) {
+        console.error('Error saving CSI changes:', error);
+        hideLoadingScreen();
+        showMessageBox(`Failed to save changes: ${error.message}`, true);
+    }
+}
+
+function discardAllCSIChanges() {
+    if (csiPendingChanges.size === 0) {
+        showMessageBox('No changes to discard.', true);
+        return;
+    }
+    
+    if (!confirm(`Are you sure you want to discard all ${csiPendingChanges.size} pending change(s)?`)) {
+        return;
+    }
+    
+    csiPendingChanges.clear();
+    renderCSITable();
+    updateChangesSummary();
+    updateButtonStates();
+    
+    showMessageBox('All changes discarded.');
+}
+
+function showCSILoadingState() {
+    document.getElementById('csi-table-loading').style.display = 'block';
+    document.getElementById('csi-table-container').style.display = 'none';
+    document.getElementById('csi-no-projects').style.display = 'none';
+}
+
+function hideCSILoadingState() {
+    document.getElementById('csi-table-loading').style.display = 'none';
+}
+
+function getStatusColor(status) {
+    const colors = {
+        'draft': 'bg-gray-100 text-gray-800',
+        'submitted': 'bg-yellow-100 text-yellow-800',
+        'reviewer_approved': 'bg-blue-100 text-blue-800',
+        'reviewer_rejected': 'bg-red-100 text-red-800',
+        'admin_approved': 'bg-green-100 text-green-800',
+        'admin_rejected': 'bg-red-100 text-red-800'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800';
+}
+
+function formatStatus(status) {
+    const statusMap = {
+        'draft': 'Draft',
+        'submitted': 'Pending Review',
+        'reviewer_approved': 'Pending Admin',
+        'reviewer_rejected': 'Rejected',
+        'admin_approved': 'Approved',
+        'admin_rejected': 'Admin Rejected'
+    };
+    return statusMap[status] || status;
+}
+
+// Make functions globally available
+window.updateCSIDropdown = updateCSIDropdown;
+window.updateCSIField = updateCSIField;
+window.loadCSIManagementData = loadCSIManagementDataComplete;
+window.saveAllCSIChanges = saveAllCSIChanges;
+window.discardAllCSIChanges = discardAllCSIChanges;
+
+// =========================================================
+// END CSI PATH MANAGEMENT FUNCTIONS
+// =========================================================
 // Make functions globally available for onclick handlers
         window.removeAttribute = removeAttribute;
         window.editAttribute = editAttribute;
