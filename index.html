@@ -1,4 +1,26 @@
 <!DOCTYPE html>
+<!--
+MODIFICATION NOTE: This file has been modified to include description fields 
+in all classification_projects table write operations.
+
+Modified Functions:
+1. saveProjectAsDraft() - Now extracts and stores division_description, section_description, 
+   detailed_section_description, and item_description from dropdown values
+2. saveEditedProject() - Now passes description fields to RPC functions
+3. handleEditModalConfirmSubmit() - Now passes description fields to RPC functions
+
+Changes Made:
+- Added description field extraction from "code - description" dropdown format
+- Updated insertData and updateData objects to include description fields
+- Updated admin_update_project RPC calls to include description parameters
+- Updated update_project RPC calls to include description parameters
+
+Impact: The classification_projects table will now have complete description data
+instead of just codes, improving data richness and user experience.
+
+Warning: These changes require corresponding RPC function updates in the database
+to accept the new description parameters.
+-->
 <html lang="en">
 
 <head>
@@ -475,10 +497,10 @@
                                     <div id="no-project-bar" class="bg-gray-400 transition-all duration-500" style="width: 0%"></div>
                                 </div>
                                 <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                    <span>■ Approved</span>
-                                    <span>■ Pending</span>
-                                    <span>■ Draft</span>
-                                    <span>■ No Projects</span>
+                                    <span>â–  Approved</span>
+                                    <span>â–  Pending</span>
+                                    <span>â–  Draft</span>
+                                    <span>â–  No Projects</span>
                                 </div>
                             </div>
                         </div>
@@ -2318,7 +2340,7 @@ function updateCollectedDataDisplay() {
             <div class="mb-6 p-4 border border-gray-200 rounded-lg bg-white">
                 <div class="mb-3">
                     <h5 class="font-medium text-gray-900">CSI Path:</h5>
-                    <p class="text-sm text-gray-600">${entry.division} → ${entry.section} → ${entry.subsection} → ${entry.item}</p>
+                    <p class="text-sm text-gray-600">${entry.division} â†’ ${entry.section} â†’ ${entry.subsection} â†’ ${entry.item}</p>
                    ${entry.additionalLevel ? `<p class="text-sm text-gray-600">Additional Level: ${entry.additionalLevel.name} > ${entry.additionalLevel.value}</p>` : ''}
                 </div>
                 <div class="space-y-2">
@@ -2406,9 +2428,13 @@ function removeAttribute(entryIndex, attrIndex) {
         }
 
         const divisionCode = division.split(' - ')[0];
+        const divisionDescription = division.split(' - ')[1] || '';
         const sectionCode = section.split(' - ')[0];
+        const sectionDescription = section.split(' - ')[1] || '';
         const detailedSectionCode = subsection.split(' - ')[0];
+        const detailedSectionDescription = subsection.split(' - ')[1] || '';
         const itemCode = item.split(' - ')[0];
+        const itemDescription = item.split(' - ')[1] || '';
 
         // Prepare attributes
         const attributes = [];
@@ -2436,9 +2462,13 @@ function removeAttribute(entryIndex, attrIndex) {
             // Update project - reset to draft if it was rejected, admin approved if admin
             const updateData = {
                 division_code: divisionCode,
+                division_description: divisionDescription,
                 section_code: sectionCode,
+                section_description: sectionDescription,
                 detailed_section_code: detailedSectionCode,
+                detailed_section_description: detailedSectionDescription,
                 item_code: itemCode,
+                item_description: itemDescription,
                 additional_level_name: additionalLevel ? additionalLevel.name : null,
                 additional_level_value: additionalLevel ? additionalLevel.value : null,
                 updated_at: new Date().toISOString()
@@ -2522,9 +2552,13 @@ function removeAttribute(entryIndex, attrIndex) {
             const insertData = {
                 project_name: projectName,
                 division_code: divisionCode,
+                division_description: divisionDescription,
                 section_code: sectionCode,
+                section_description: sectionDescription,
                 detailed_section_code: detailedSectionCode,
+                detailed_section_description: detailedSectionDescription,
                 item_code: itemCode,
+                item_description: itemDescription,
                 created_by: currentUser.id,
                 additional_level_name: additionalLevel ? additionalLevel.name : null,
                 additional_level_value: additionalLevel ? additionalLevel.value : null,
@@ -2586,6 +2620,30 @@ function removeAttribute(entryIndex, attrIndex) {
         showMessageBox(`Failed to save project: ${error.message}`, true);
     }
 }      
+function getStatusIcon(status) {
+    const icons = {
+        'draft': `<svg class="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>`,
+        'submitted': `<svg class="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>`,
+        'reviewer_approved': `<svg class="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>`,
+        'reviewer_rejected': `<svg class="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>`,
+        'admin_approved': `<svg class="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>`,
+        'admin_rejected': `<svg class="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>`
+    };
+    return icons[status] || icons['draft'];
+}
+
 async function loadUserProjects() {
     try {
         const projectsList = document.getElementById('projects-list');
@@ -2647,46 +2705,160 @@ async function loadUserProjects() {
                 }
 
                 html += `
-                    <div class="bg-white border border-gray-200 rounded-lg p-4">
-                        <div class="flex items-center justify-between">
-                            <div class="flex-1">
-                                <h4 class="text-lg font-medium text-gray-900">${project.project_name}${roleText}</h4>
-                                <p class="text-sm text-gray-500">CSI: ${project.division_code} → ${project.section_code} → ${project.detailed_section_code} → ${project.item_code}</p>
-                                ${project.additional_level_name ? `<p class="text-sm text-gray-500">Additional Level: ${project.additional_level_name} > ${project.additional_level_value}</p>` : ''}
-                                <p class="text-sm text-gray-500">Attributes: ${attributeCount}</p>
-                                <p class="text-sm text-gray-500">Created: ${new Date(project.created_at).toLocaleDateString()}</p>
-                                ${project.submitted_at ? `<p class="text-sm text-gray-500">Submitted: ${new Date(project.submitted_at).toLocaleDateString()}</p>` : ''}
-                                ${project.reviewed_at ? `<p class="text-sm text-gray-500">Reviewed: ${new Date(project.reviewed_at).toLocaleDateString()}</p>` : ''}
-                                ${project.reviewer_comments ? `<p class="text-sm text-gray-600 mt-2"><strong>Review Comments:</strong> ${project.reviewer_comments}</p>` : ''}
+                    <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200">
+                        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                            <!-- Main Content Area -->
+                            <div class="flex-1 min-w-0">
+                                <!-- Project Header -->
+                                <div class="flex items-start justify-between mb-3">
+                                    <div class="flex-1">
+                                        <h4 class="text-lg font-medium text-gray-900 mb-1">${project.project_name}${roleText}</h4>
+                                        <div class="flex items-center gap-2 text-sm text-gray-500">
+                                            <span class="font-medium">Project ID:</span>
+                                            <span class="font-mono bg-gray-100 px-2 py-1 rounded text-xs font-semibold text-gray-700">#${project.id}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Enhanced CSI Path Display -->
+                                <div class="mt-3">
+                                    <p class="text-sm font-medium text-blue-600 mb-2">CSI Classification Path:</p>
+                                    <div class="bg-blue-50 border border-blue-200 rounded-md p-3 mb-3">
+                                        <div class="space-y-1 text-sm">
+                                            <!-- Division -->
+                                            <div class="flex items-start">
+                                                <span class="inline-block w-20 font-mono text-blue-700 font-semibold">${project.division_code}</span>
+                                                <span class="text-gray-700">${project.division_description || 'Division'}</span>
+                                            </div>
+                                            <!-- Section -->
+                                            <div class="flex items-start ml-4">
+                                                <span class="inline-block w-20 font-mono text-blue-600 font-medium">${project.section_code}</span>
+                                                <span class="text-gray-600">${project.section_description || 'Section'}</span>
+                                            </div>
+                                            <!-- Detailed Section -->
+                                            <div class="flex items-start ml-8">
+                                                <span class="inline-block w-20 font-mono text-blue-500">${project.detailed_section_code}</span>
+                                                <span class="text-gray-600">${project.detailed_section_description || 'Detailed Section'}</span>
+                                            </div>
+                                            <!-- Item -->
+                                            <div class="flex items-start ml-12">
+                                                <span class="inline-block w-20 font-mono text-blue-400 font-medium">${project.item_code}</span>
+                                                <span class="text-gray-700 font-medium">${project.item_description || 'Item'}</span>
+                                            </div>
+                                            ${project.additional_level_name ? `
+                                            <!-- Additional Level -->
+                                            <div class="flex items-start ml-16 pt-1 border-t border-blue-200 mt-2">
+                                                <span class="inline-block w-20 text-xs text-purple-600 font-medium">${project.additional_level_name}:</span>
+                                                <span class="text-gray-700 text-xs font-medium">${project.additional_level_value}</span>
+                                            </div>` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                                               
+                                <!-- Enhanced Project Metadata with Icons -->
+                                <div class="flex flex-wrap gap-3 text-sm text-gray-500">
+                                    <span class="flex items-center">
+                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                                        </svg>
+                                        ${attributeCount} attribute${attributeCount !== 1 ? 's' : ''}
+                                    </span>
+                                    <span class="flex items-center">
+                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 0h6m-6 0l-2 13a2 2 0 002 2h8a2 2 0 002-2L16 7"></path>
+                                        </svg>
+                                        Created: ${new Date(project.created_at).toLocaleDateString()}
+                                    </span>
+                                    ${project.submitted_at ? `
+                                    <span class="flex items-center">
+                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                                        </svg>
+                                        Submitted: ${new Date(project.submitted_at).toLocaleDateString()}
+                                    </span>` : ''}
+                                    ${project.reviewed_at ? `
+                                    <span class="flex items-center">
+                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        Reviewed: ${new Date(project.reviewed_at).toLocaleDateString()}
+                                    </span>` : ''}
+                                </div>
+
+                                ${project.reviewer_comments ? `
+                                <!-- Enhanced Review Comments -->
+                                <div class="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-md">
+                                    <div class="flex items-start">
+                                        <svg class="w-5 h-5 text-amber-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10m0 0V6a2 2 0 00-2-2H9a2 2 0 00-2 2v2m0 0v10a2 2 0 002 2h8a2 2 0 002-2V8"></path>
+                                        </svg>
+                                        <div>
+                                            <div class="text-sm font-medium text-amber-800">Review Comments:</div>
+                                            <div class="text-sm text-amber-700 mt-1">${project.reviewer_comments}</div>
+                                        </div>
+                                    </div>
+                                </div>` : ''}
                             </div>
-                            <div class="flex items-center space-x-3">
-                                <!-- Always show view button -->
-                                <button onclick="openViewProjectModal(${project.id})" class="px-3 py-1 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm">
-                                    View
-                                </button>
-                                ${((isDraft || project.status === 'reviewer_rejected' || project.status === 'admin_rejected') && isCreator) || isAdmin ? `
-    <button onclick="openEditProjectModal(${project.id})" class="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">
-        ${isAdmin ? 'Edit' : (isDraft ? 'Edit Draft' : 'Modify & Resubmit')}
-    </button>
-` : ''}
-                                ${isAdmin && !isDraft ? `
-                                    <button onclick="modifyRejectedProject(${project.id})" class="px-3 py-1 bg-purple-600 text-white rounded-md hover:bg-purple-700 text-sm">
-                                        Admin Edit
+
+                            <!-- Actions Area -->
+                            <div class="flex flex-col sm:flex-row items-center gap-3 lg:ml-6">
+                                <!-- Action Buttons -->
+                                <div class="flex items-center gap-2">
+                                    <!-- Always show view button -->
+                                    <button onclick="openViewProjectModal(${project.id})" 
+                                            class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm font-medium transition-colors duration-200 flex items-center">
+                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        </svg>
+                                        View
                                     </button>
-                                ` : ''}
-                               ${isAdmin ? `
-    <button data-project-id="${project.id}" data-project-name="${project.project_name}" class="delete-project-btn px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm">
-        Delete
-    </button>
-` : ''}
-${(isDraft && isCreator && !isAdmin) ? `
-    <button data-project-id="${project.id}" data-project-name="${project.project_name}" class="delete-project-btn px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm">
-        Delete Draft
-    </button>
-` : ''}
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColor}">
-                                    ${statusText}
-                                </span>
+
+                                    ${((isDraft || project.status === 'reviewer_rejected' || project.status === 'admin_rejected') && isCreator) || isAdmin ? `
+                                    <button onclick="openEditProjectModal(${project.id})" 
+                                            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium transition-colors duration-200 flex items-center">
+                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                        ${isAdmin ? 'Edit' : (isDraft ? 'Edit Draft' : 'Modify & Resubmit')}
+                                    </button>` : ''}
+
+                                    ${isAdmin && !isDraft ? `
+                                    <button onclick="modifyRejectedProject(${project.id})" 
+                                            class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 text-sm font-medium transition-colors duration-200 flex items-center">
+                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        </svg>
+                                        Admin Edit
+                                    </button>` : ''}
+
+                                    ${isAdmin ? `
+                                    <button data-project-id="${project.id}" data-project-name="${project.project_name}" 
+                                            class="delete-project-btn px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium transition-colors duration-200 flex items-center">
+                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                        Delete
+                                    </button>` : ''}
+
+                                    ${(isDraft && isCreator && !isAdmin) ? `
+                                    <button data-project-id="${project.id}" data-project-name="${project.project_name}" 
+                                            class="delete-project-btn px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium transition-colors duration-200 flex items-center">
+                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                        Delete Draft
+                                    </button>` : ''}
+                                </div>
+
+                                <!-- Status Badge -->
+                                <div class="flex items-center">
+                                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${statusColor} border border-opacity-20">
+                                        ${getStatusIcon(project.status)}
+                                        ${statusText}
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
