@@ -9,12 +9,18 @@ CRITICAL SECURITY FIX APPLIED:
 - Now: Loads existing attributes from database before updating CSI paths
 - This prevents catastrophic data loss when admin changes CSI paths
 
+LATEST UPDATE: Added description parameters to all RPC function calls
+- Updated all admin_update_project and update_project RPC calls
+- Added description parameters: division_description_param, section_description_param, 
+  detailed_section_description_param, item_description_param
+
 Modified Functions:
 1. saveProjectAsDraft() - Now extracts and stores division_description, section_description, 
    detailed_section_description, and item_description from dropdown values
 2. saveEditedProject() - Now passes description fields to RPC functions
 3. handleEditModalConfirmSubmit() - Now passes description fields to RPC functions
 4. saveAllCSIChanges() - CRITICAL FIX: Now preserves existing attributes during CSI path updates
+   + Added description parameter support
 
 Changes Made:
 - Added description field extraction from "code - description" dropdown format
@@ -22,13 +28,19 @@ Changes Made:
 - Updated admin_update_project RPC calls to include description parameters
 - Updated update_project RPC calls to include description parameters
 - FIXED CSI path management to load and preserve existing project attributes
+- ADDED description parameter support to saveAllCSIChanges function
 
 Impact: The classification_projects table will now have complete description data
 instead of just codes, improving data richness and user experience.
 CRITICAL: Prevents attribute deletion during CSI path management operations.
 
-Warning: These changes require corresponding RPC function updates in the database
-to accept the new description parameters.
+REQUIRED: These changes require corresponding RPC function updates in the database
+to accept the new description parameters before this HTML file will work properly.
+
+Modified RPC calls in functions:
+- saveEditedProject() -> admin_update_project & update_project
+- handleEditModalConfirmSubmit() -> admin_update_project & update_project  
+- saveAllCSIChanges() -> admin_update_project
 -->
 <html lang="en">
 
@@ -511,10 +523,10 @@ to accept the new description parameters.
                                     <div id="no-project-bar" class="bg-gray-400 transition-all duration-500" style="width: 0%"></div>
                                 </div>
                                 <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                    <span>Ã¢â€“Â  Approved</span>
-                                    <span>Ã¢â€“Â  Pending</span>
-                                    <span>Ã¢â€“Â  Draft</span>
-                                    <span>Ã¢â€“Â  No Projects</span>
+                                    <span>ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â  Approved</span>
+                                    <span>ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â  Pending</span>
+                                    <span>ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â  Draft</span>
+                                    <span>ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â  No Projects</span>
                                 </div>
                             </div>
                         </div>
@@ -2434,7 +2446,7 @@ function updateCollectedDataDisplay() {
             <div class="mb-6 p-4 border border-gray-200 rounded-lg bg-white">
                 <div class="mb-3">
                     <h5 class="font-medium text-gray-900">CSI Path:</h5>
-                    <p class="text-sm text-gray-600">${entry.division} Ã¢â€ â€™ ${entry.section} Ã¢â€ â€™ ${entry.subsection} Ã¢â€ â€™ ${entry.item}</p>
+                    <p class="text-sm text-gray-600">${entry.division} ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ ${entry.section} ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ ${entry.subsection} ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ ${entry.item}</p>
                    ${entry.additionalLevel ? `<p class="text-sm text-gray-600">Additional Level: ${entry.additionalLevel.name} > ${entry.additionalLevel.value}</p>` : ''}
                 </div>
                 <div class="space-y-2">
@@ -3721,7 +3733,11 @@ async function saveEditedProject() {
                 item_code_param: itemCode,
                 additional_level_name_param: levelName || null,
                 additional_level_value_param: levelValue || null,
-                attributes_param: attributes
+                attributes_param: attributes,
+                division_description_param: project.division_description || '',
+                section_description_param: project.section_description || '',
+                detailed_section_description_param: project.detailed_section_description || '',
+                item_description_param: project.item_description || ''
             });
             data = result.data;
             error = result.error;
@@ -3736,7 +3752,11 @@ async function saveEditedProject() {
                 item_code_param: itemCode,
                 additional_level_name_param: levelName || null,
                 additional_level_value_param: levelValue || null,
-                attributes_param: attributes
+                attributes_param: attributes,
+                division_description_param: project.division_description || '',
+                section_description_param: project.section_description || '',
+                detailed_section_description_param: project.detailed_section_description || '',
+                item_description_param: project.item_description || ''
             });
             data = result.data;
             error = result.error;
@@ -4160,7 +4180,11 @@ async function handleEditModalConfirmSubmit() {
                     item_code_param: itemCode,
                     additional_level_name_param: levelName || null,
                     additional_level_value_param: levelValue || null,
-                    attributes_param: attributes
+                    attributes_param: attributes,
+                    division_description_param: project.division_description || '',
+                    section_description_param: project.section_description || '',
+                    detailed_section_description_param: project.detailed_section_description || '',
+                    item_description_param: project.item_description || ''
                 });
                 data = result.data;
                 error = result.error;
@@ -4175,7 +4199,11 @@ async function handleEditModalConfirmSubmit() {
                     item_code_param: itemCode,
                     additional_level_name_param: levelName || null,
                     additional_level_value_param: levelValue || null,
-                    attributes_param: attributes
+                    attributes_param: attributes,
+                    division_description_param: project.division_description || '',
+                    section_description_param: project.section_description || '',
+                    detailed_section_description_param: project.detailed_section_description || '',
+                    item_description_param: project.item_description || ''
                 });
                 data = result.data;
                 error = result.error;
@@ -4520,7 +4548,7 @@ function updateCSIChangesDisplay() {
         
         for (const [projectId, changes] of csiPendingChanges) {
             const originalProject = csiProjectsData.find(p => p.id === projectId);
-            changesHTML += `<div class="mt-1">• <strong>${originalProject.project_name}</strong>: CSI path modifications</div>`;
+            changesHTML += `<div class="mt-1">â€¢ <strong>${originalProject.project_name}</strong>: CSI path modifications</div>`;
         }
         
         changesList.innerHTML = changesHTML;
@@ -7012,7 +7040,7 @@ function updateChangesSummary() {
         const changeList = Object.keys(changes).map(key => {
             const oldValue = project[key] || '';
             const newValue = changes[key];
-            return `${key.replace(/_/g, ' ')}: "${oldValue}" → "${newValue}"`;
+            return `${key.replace(/_/g, ' ')}: "${oldValue}" â†’ "${newValue}"`;
         }).join(', ');
         
         html += `<div class="mb-1"><strong>${project.project_name}:</strong> ${changeList}</div>`;
@@ -7085,7 +7113,11 @@ async function saveAllCSIChanges() {
                     item_code_param: changes.item_code || project.item_code,
                     additional_level_name_param: changes.additional_level_name !== undefined ? changes.additional_level_name : project.additional_level_name,
                     additional_level_value_param: changes.additional_level_value !== undefined ? changes.additional_level_value : project.additional_level_value,
-                    attributes_param: formattedAttributes // FIXED: Preserve existing attributes
+                    attributes_param: formattedAttributes, // FIXED: Preserve existing attributes
+                    division_description_param: changes.division_description || project.division_description || '',
+                    section_description_param: changes.section_description || project.section_description || '',
+                    detailed_section_description_param: changes.detailed_section_description || project.detailed_section_description || '',
+                    item_description_param: changes.item_description || project.item_description || ''
                 };
                 
                 const { data, error } = await supabase.rpc('admin_update_project', updateData);
