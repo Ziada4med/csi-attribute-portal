@@ -3734,10 +3734,10 @@ async function saveEditedProject() {
                 additional_level_name_param: levelName || null,
                 additional_level_value_param: levelValue || null,
                 attributes_param: attributes,
-                division_description_param: project.division_description || '',
-                section_description_param: project.section_description || '',
-                detailed_section_description_param: project.detailed_section_description || '',
-                item_description_param: project.item_description || ''
+                division_description_param: await getDivisionDescription(divisionCode),
+                section_description_param: await getSectionDescription(sectionCode),
+                detailed_section_description_param: await getDetailedSectionDescription(detailedSectionCode),
+                item_description_param: await getItemDescription(itemCode)
             });
             data = result.data;
             error = result.error;
@@ -3753,10 +3753,10 @@ async function saveEditedProject() {
                 additional_level_name_param: levelName || null,
                 additional_level_value_param: levelValue || null,
                 attributes_param: attributes,
-                division_description_param: project.division_description || '',
-                section_description_param: project.section_description || '',
-                detailed_section_description_param: project.detailed_section_description || '',
-                item_description_param: project.item_description || ''
+                division_description_param: await getDivisionDescription(divisionCode),
+                section_description_param: await getSectionDescription(sectionCode),
+                detailed_section_description_param: await getDetailedSectionDescription(detailedSectionCode),
+                item_description_param: await getItemDescription(itemCode)
             });
             data = result.data;
             error = result.error;
@@ -4181,10 +4181,10 @@ async function handleEditModalConfirmSubmit() {
                     additional_level_name_param: levelName || null,
                     additional_level_value_param: levelValue || null,
                     attributes_param: attributes,
-                    division_description_param: project.division_description || '',
-                    section_description_param: project.section_description || '',
-                    detailed_section_description_param: project.detailed_section_description || '',
-                    item_description_param: project.item_description || ''
+                    division_description_param: await getDivisionDescription(divisionCode),
+                    section_description_param: await getSectionDescription(sectionCode),
+                    detailed_section_description_param: await getDetailedSectionDescription(detailedSectionCode),
+                    item_description_param: await getItemDescription(itemCode)
                 });
                 data = result.data;
                 error = result.error;
@@ -4200,10 +4200,10 @@ async function handleEditModalConfirmSubmit() {
                     additional_level_name_param: levelName || null,
                     additional_level_value_param: levelValue || null,
                     attributes_param: attributes,
-                    division_description_param: project.division_description || '',
-                    section_description_param: project.section_description || '',
-                    detailed_section_description_param: project.detailed_section_description || '',
-                    item_description_param: project.item_description || ''
+                    division_description_param: await getDivisionDescription(divisionCode),
+                    section_description_param: await getSectionDescription(sectionCode),
+                    detailed_section_description_param: await getDetailedSectionDescription(detailedSectionCode),
+                    item_description_param: await getItemDescription(itemCode)
                 });
                 data = result.data;
                 error = result.error;
