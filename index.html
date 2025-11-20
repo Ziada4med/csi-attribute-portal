@@ -56,6 +56,8 @@ Modified RPC calls in functions:
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- EmailJS CDN for email notifications -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
     <style>
         body {
@@ -523,10 +525,10 @@ Modified RPC calls in functions:
                                     <div id="no-project-bar" class="bg-gray-400 transition-all duration-500" style="width: 0%"></div>
                                 </div>
                                 <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                    <span>ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â  Approved</span>
-                                    <span>ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â  Pending</span>
-                                    <span>ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â  Draft</span>
-                                    <span>ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â  No Projects</span>
+                                    <span>ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“Ãƒâ€šÃ‚Â  Approved</span>
+                                    <span>ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“Ãƒâ€šÃ‚Â  Pending</span>
+                                    <span>ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“Ãƒâ€šÃ‚Â  Draft</span>
+                                    <span>ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“Ãƒâ€šÃ‚Â  No Projects</span>
                                 </div>
                             </div>
                         </div>
@@ -813,6 +815,91 @@ Modified RPC calls in functions:
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12ZnRhYXhnZHlnZXl6Y3Z6cWZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2MjI3OTQsImV4cCI6MjA3NDE5ODc5NH0.nj5c_AAEg4U2qlcE1vQDMWt0nfXpmUYR1lrTR6KCIDY';
 
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Initialize EmailJS for notifications
+        emailjs.init('zx157n_sqPsV0_piq'); // Your EmailJS public key
+
+        // Email notification functions
+        async function sendEmailNotification(recipientEmail, recipientName, subject, projectName, submitterName, projectId, creationDate) {
+            try {
+                const templateParams = {
+                    to_email: recipientEmail,
+                    to_name: recipientName,
+                    subject: subject,
+                    project_name: projectName,
+                    submitter_name: submitterName,
+                    request_id: projectId,
+                    creation_date: creationDate,
+                    message: `A new project: "${projectName}", Request ID: ${projectId} has been created by ${submitterName} on ${creationDate} and is pending your approval. Please login to the approval portal to submit your review.`,
+                    portal_link: window.location.origin + '/approval-portal',
+                    from_name: 'CSI Attribute Portal'
+                };
+                
+                console.log('Sending email notification:', templateParams);
+                
+                const response = await emailjs.send('service_0xi7zg5', 'template_k2dzru6', templateParams);
+                console.log('Email sent successfully:', response);
+                return { success: true, response };
+            } catch (error) {
+                console.error('Failed to send email notification:', error);
+                return { success: false, error };
+            }
+        }
+
+        async function notifyReviewerOnSubmission(projectId, projectName) {
+            try {
+                // Get project details with reviewer information
+                const { data: project, error: projectError } = await supabase
+                    .from('classification_projects')
+                    .select(`
+                        *,
+                        assigned_reviewer:assigned_reviewer_id(id, email, username),
+                        creator:created_by(username)
+                    `)
+                    .eq('id', projectId)
+                    .single();
+
+                if (projectError) {
+                    console.error('Error fetching project for notification:', projectError);
+                    return false;
+                }
+
+                if (project.assigned_reviewer && project.assigned_reviewer.email) {
+                    const subject = `New CSI Project Submitted for Review: ${projectName}`;
+                    
+                    // Format the creation date
+                    const creationDate = new Date(project.created_at).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                    
+                    const emailResult = await sendEmailNotification(
+                        project.assigned_reviewer.email,
+                        project.assigned_reviewer.username,
+                        subject,
+                        projectName,
+                        project.creator.username,
+                        projectId,
+                        creationDate
+                    );
+
+                    if (emailResult.success) {
+                        console.log('Reviewer notification sent successfully');
+                        return true;
+                    } else {
+                        console.error('Failed to send reviewer notification');
+                        return false;
+                    }
+                } else {
+                    console.log('No reviewer assigned or no email found');
+                    return false;
+                }
+            } catch (error) {
+                console.error('Error in notifyReviewerOnSubmission:', error);
+                return false;
+            }
+        }
 
         // Global state
         let currentUser = null;
@@ -2446,7 +2533,7 @@ function updateCollectedDataDisplay() {
             <div class="mb-6 p-4 border border-gray-200 rounded-lg bg-white">
                 <div class="mb-3">
                     <h5 class="font-medium text-gray-900">CSI Path:</h5>
-                    <p class="text-sm text-gray-600">${entry.division} ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ ${entry.section} ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ ${entry.subsection} ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ ${entry.item}</p>
+                    <p class="text-sm text-gray-600">${entry.division} ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ ${entry.section} ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ ${entry.subsection} ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ ${entry.item}</p>
                    ${entry.additionalLevel ? `<p class="text-sm text-gray-600">Additional Level: ${entry.additionalLevel.name} > ${entry.additionalLevel.value}</p>` : ''}
                 </div>
                 <div class="space-y-2">
@@ -3734,10 +3821,10 @@ async function saveEditedProject() {
                 additional_level_name_param: levelName || null,
                 additional_level_value_param: levelValue || null,
                 attributes_param: attributes,
-                division_description_param: await getDivisionDescription(divisionCode),
-                section_description_param: await getSectionDescription(sectionCode),
-                detailed_section_description_param: await getDetailedSectionDescription(detailedSectionCode),
-                item_description_param: await getItemDescription(itemCode)
+                division_description_param: project.division_description || '',
+                section_description_param: project.section_description || '',
+                detailed_section_description_param: project.detailed_section_description || '',
+                item_description_param: project.item_description || ''
             });
             data = result.data;
             error = result.error;
@@ -3753,10 +3840,10 @@ async function saveEditedProject() {
                 additional_level_name_param: levelName || null,
                 additional_level_value_param: levelValue || null,
                 attributes_param: attributes,
-                division_description_param: await getDivisionDescription(divisionCode),
-                section_description_param: await getSectionDescription(sectionCode),
-                detailed_section_description_param: await getDetailedSectionDescription(detailedSectionCode),
-                item_description_param: await getItemDescription(itemCode)
+                division_description_param: project.division_description || '',
+                section_description_param: project.section_description || '',
+                detailed_section_description_param: project.detailed_section_description || '',
+                item_description_param: project.item_description || ''
             });
             data = result.data;
             error = result.error;
@@ -3880,8 +3967,18 @@ async function confirmSubmission() {
         if (error) throw error;
 
         if (data && data.success) {
+            // Send email notification to reviewer
+            const projectName = currentProject?.project_name || loadedDraftProject?.project_name || 'Unnamed Project';
+            const notificationResult = await notifyReviewerOnSubmission(projectId, projectName);
+            
             hideLoadingScreen();
-            showMessageBox('Project submitted for review successfully!');
+            
+            if (notificationResult) {
+                showMessageBox('Project submitted for review successfully! Email notification sent to reviewer.');
+            } else {
+                showMessageBox('Project submitted for review successfully! However, email notification to reviewer failed.');
+            }
+            
             reviewerSelection.style.display = 'none';
 
           // Clear current project and data
@@ -4181,10 +4278,10 @@ async function handleEditModalConfirmSubmit() {
                     additional_level_name_param: levelName || null,
                     additional_level_value_param: levelValue || null,
                     attributes_param: attributes,
-                    division_description_param: await getDivisionDescription(divisionCode),
-                    section_description_param: await getSectionDescription(sectionCode),
-                    detailed_section_description_param: await getDetailedSectionDescription(detailedSectionCode),
-                    item_description_param: await getItemDescription(itemCode)
+                    division_description_param: project.division_description || '',
+                    section_description_param: project.section_description || '',
+                    detailed_section_description_param: project.detailed_section_description || '',
+                    item_description_param: project.item_description || ''
                 });
                 data = result.data;
                 error = result.error;
@@ -4200,10 +4297,10 @@ async function handleEditModalConfirmSubmit() {
                     additional_level_name_param: levelName || null,
                     additional_level_value_param: levelValue || null,
                     attributes_param: attributes,
-                    division_description_param: await getDivisionDescription(divisionCode),
-                    section_description_param: await getSectionDescription(sectionCode),
-                    detailed_section_description_param: await getDetailedSectionDescription(detailedSectionCode),
-                    item_description_param: await getItemDescription(itemCode)
+                    division_description_param: project.division_description || '',
+                    section_description_param: project.section_description || '',
+                    detailed_section_description_param: project.detailed_section_description || '',
+                    item_description_param: project.item_description || ''
                 });
                 data = result.data;
                 error = result.error;
@@ -4236,9 +4333,18 @@ async function handleEditModalConfirmSubmit() {
             throw new Error(data.message);
         }
         
+        // Send email notification to reviewer
+        const projectName = project.project_name;
+        const notificationResult = await notifyReviewerOnSubmission(projectId, projectName);
+        
         hideLoadingScreen();
         closeModal('edit-project-modal');
-        showMessageBox('Project submitted for review successfully!');
+        
+        if (notificationResult) {
+            showMessageBox('Project submitted for review successfully! Email notification sent to reviewer.');
+        } else {
+            showMessageBox('Project submitted for review successfully! However, email notification to reviewer failed.');
+        }
         
         // Clear editing data
         window.editingProjectData = null;
@@ -4548,7 +4654,7 @@ function updateCSIChangesDisplay() {
         
         for (const [projectId, changes] of csiPendingChanges) {
             const originalProject = csiProjectsData.find(p => p.id === projectId);
-            changesHTML += `<div class="mt-1">â€¢ <strong>${originalProject.project_name}</strong>: CSI path modifications</div>`;
+            changesHTML += `<div class="mt-1">Ã¢â‚¬Â¢ <strong>${originalProject.project_name}</strong>: CSI path modifications</div>`;
         }
         
         changesList.innerHTML = changesHTML;
@@ -7040,7 +7146,7 @@ function updateChangesSummary() {
         const changeList = Object.keys(changes).map(key => {
             const oldValue = project[key] || '';
             const newValue = changes[key];
-            return `${key.replace(/_/g, ' ')}: "${oldValue}" â†’ "${newValue}"`;
+            return `${key.replace(/_/g, ' ')}: "${oldValue}" Ã¢â€ â€™ "${newValue}"`;
         }).join(', ');
         
         html += `<div class="mb-1"><strong>${project.project_name}:</strong> ${changeList}</div>`;
