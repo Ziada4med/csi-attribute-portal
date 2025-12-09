@@ -37,6 +37,13 @@ CRITICAL: Prevents attribute deletion during CSI path management operations.
 REQUIRED: These changes require corresponding RPC function updates in the database
 to accept the new description parameters before this HTML file will work properly.
 
+FOREIGN KEY INTEGRATION ADDED:
+- Added getOrCreateAdditionalLevelValueId() helper function for FK management
+- Updated saveProjectAsDraft() to populate additional_level_value_id FK field
+- Maintains backward compatibility with existing text fields
+- New projects will have both text and FK relationships populated
+- Existing functionality preserved - no breaking changes
+
 Modified RPC calls in functions:
 - saveEditedProject() -> admin_update_project & update_project
 - handleEditModalConfirmSubmit() -> admin_update_project & update_project  
@@ -525,10 +532,10 @@ Modified RPC calls in functions:
                                     <div id="no-project-bar" class="bg-gray-400 transition-all duration-500" style="width: 0%"></div>
                                 </div>
                                 <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                    <span>ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“Ãƒâ€šÃ‚Â  Approved</span>
-                                    <span>ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“Ãƒâ€šÃ‚Â  Pending</span>
-                                    <span>ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“Ãƒâ€šÃ‚Â  Draft</span>
-                                    <span>ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“Ãƒâ€šÃ‚Â  No Projects</span>
+                                    <span>ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  Approved</span>
+                                    <span>ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  Pending</span>
+                                    <span>ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  Draft</span>
+                                    <span>ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  No Projects</span>
                                 </div>
                             </div>
                         </div>
@@ -2533,7 +2540,7 @@ function updateCollectedDataDisplay() {
             <div class="mb-6 p-4 border border-gray-200 rounded-lg bg-white">
                 <div class="mb-3">
                     <h5 class="font-medium text-gray-900">CSI Path:</h5>
-                    <p class="text-sm text-gray-600">${entry.division} ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ ${entry.section} ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ ${entry.subsection} ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ ${entry.item}</p>
+                    <p class="text-sm text-gray-600">${entry.division} ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ ${entry.section} ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ ${entry.subsection} ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ ${entry.item}</p>
                    ${entry.additionalLevel ? `<p class="text-sm text-gray-600">Additional Level: ${entry.additionalLevel.name} > ${entry.additionalLevel.value}</p>` : ''}
                 </div>
                 <div class="space-y-2">
@@ -2599,6 +2606,53 @@ function removeAttribute(entryIndex, attrIndex) {
     }
 }
         // =========================================================
+        // FOREIGN KEY HELPER FUNCTION
+        // =========================================================
+
+        async function getOrCreateAdditionalLevelValueId(additionalLevel, divisionCode, sectionCode, detailedSectionCode, itemCode) {
+            if (!additionalLevel || !additionalLevel.name || !additionalLevel.value) {
+                return null;
+            }
+            
+            try {
+                // First, get or create the additional level
+                const { data: levelData, error: levelError } = await supabase.rpc('create_or_get_additional_level', {
+                    level_name_param: additionalLevel.name,
+                    division_code_param: divisionCode,
+                    section_code_param: sectionCode,
+                    detailed_section_code_param: detailedSectionCode,
+                    item_code_param: itemCode
+                });
+
+                if (levelError || !levelData?.success) {
+                    console.error('Error with additional level:', levelError || levelData?.message);
+                    return null;
+                }
+
+                // Then, get or create the additional level value
+                const { data: valueData, error: valueError } = await supabase.rpc('save_additional_level_value', {
+                    additional_level_id_param: levelData.level_id,
+                    value_name_param: additionalLevel.value
+                });
+
+                if (valueError) {
+                    // If it fails because value already exists, try to get the existing value
+                    const { data: existingValues } = await supabase.rpc('get_additional_level_values', {
+                        additional_level_id_param: levelData.level_id
+                    });
+                    const existingValue = existingValues?.find(v => v.value_name === additionalLevel.value);
+                    return existingValue ? existingValue.id : null;
+                }
+
+                return valueData?.value_id || null;
+                
+            } catch (error) {
+                console.error('Error in getOrCreateAdditionalLevelValueId:', error);
+                return null;
+            }
+        }
+
+        // =========================================================
         // PROJECT MANAGEMENT FUNCTIONS (ENHANCED WITH DRAFT UPDATE)
         // =========================================================
 
@@ -2652,6 +2706,11 @@ function removeAttribute(entryIndex, attrIndex) {
                 .delete()
                 .eq('project_id', loadedDraftProject.id);
 
+            // Get FK for additional level value
+            const additionalLevelValueId = await getOrCreateAdditionalLevelValueId(
+                additionalLevel, divisionCode, sectionCode, detailedSectionCode, itemCode
+            );
+
             // Update project - reset to draft if it was rejected, admin approved if admin
             const updateData = {
                 division_code: divisionCode,
@@ -2664,6 +2723,7 @@ function removeAttribute(entryIndex, attrIndex) {
                 item_description: itemDescription,
                 additional_level_name: additionalLevel ? additionalLevel.name : null,
                 additional_level_value: additionalLevel ? additionalLevel.value : null,
+                additional_level_value_id: additionalLevelValueId,
                 updated_at: new Date().toISOString()
             };
 
@@ -2741,6 +2801,11 @@ function removeAttribute(entryIndex, attrIndex) {
             // Admin projects are created as approved directly
             const projectStatus = currentUser.role === 'admin' ? 'admin_approved' : 'draft';
             
+            // Get FK for additional level value
+            const additionalLevelValueId = await getOrCreateAdditionalLevelValueId(
+                additionalLevel, divisionCode, sectionCode, detailedSectionCode, itemCode
+            );
+            
             // Direct insert to database
             const insertData = {
                 project_name: projectName,
@@ -2755,6 +2820,7 @@ function removeAttribute(entryIndex, attrIndex) {
                 created_by: currentUser.id,
                 additional_level_name: additionalLevel ? additionalLevel.name : null,
                 additional_level_value: additionalLevel ? additionalLevel.value : null,
+                additional_level_value_id: additionalLevelValueId,
                 status: projectStatus
             };
 
@@ -4654,7 +4720,7 @@ function updateCSIChangesDisplay() {
         
         for (const [projectId, changes] of csiPendingChanges) {
             const originalProject = csiProjectsData.find(p => p.id === projectId);
-            changesHTML += `<div class="mt-1">Ã¢â‚¬Â¢ <strong>${originalProject.project_name}</strong>: CSI path modifications</div>`;
+            changesHTML += `<div class="mt-1">ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ <strong>${originalProject.project_name}</strong>: CSI path modifications</div>`;
         }
         
         changesList.innerHTML = changesHTML;
@@ -7146,7 +7212,7 @@ function updateChangesSummary() {
         const changeList = Object.keys(changes).map(key => {
             const oldValue = project[key] || '';
             const newValue = changes[key];
-            return `${key.replace(/_/g, ' ')}: "${oldValue}" Ã¢â€ â€™ "${newValue}"`;
+            return `${key.replace(/_/g, ' ')}: "${oldValue}" ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ "${newValue}"`;
         }).join(', ');
         
         html += `<div class="mb-1"><strong>${project.project_name}:</strong> ${changeList}</div>`;
