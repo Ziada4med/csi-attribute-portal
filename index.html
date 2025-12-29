@@ -379,6 +379,48 @@ Modified RPC calls in functions:
                 </div>
             </div>
 
+            <!-- Project Tags Section -->
+            <div id="project-tags-section" class="bg-gray-50 p-6 rounded-lg shadow-md mb-8" style="display: none;">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-700">Project Tags</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label for="project-tags-input" class="block text-sm font-medium text-gray-700 mb-2">
+                            Add Tags for Easy Search
+                        </label>
+                        <div class="flex space-x-2">
+                            <input type="text" id="project-tags-input"
+                                class="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Enter a tag (e.g., 'electrical', 'HVAC', 'plumbing')"
+                                onkeypress="handleTagInputKeypress(event)">
+                            <button id="add-tag-btn"
+                                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                onclick="addProjectTag()">
+                                Add Tag
+                            </button>
+                        </div>
+                        <p class="text-sm text-gray-500 mt-1">
+                            Tags help users find projects with different wording. Add relevant keywords for this project.
+                        </p>
+                    </div>
+                    
+                    <!-- Tags Display -->
+                    <div id="project-tags-display" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Current Tags:</label>
+                        <div id="project-tags-list" class="flex flex-wrap gap-2">
+                            <!-- Tags will be displayed here -->
+                        </div>
+                    </div>
+
+                    <!-- Popular Tags Suggestions (if any exist) -->
+                    <div id="tag-suggestions" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Popular Tags:</label>
+                        <div id="popular-tags-list" class="flex flex-wrap gap-2">
+                            <!-- Popular tags will be displayed here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Action Buttons -->
             <div id="action-buttons-section" class="flex flex-wrap gap-4 justify-center" style="display: none;">
                 <button id="save-draft-btn"
@@ -435,11 +477,55 @@ Modified RPC calls in functions:
             <div class="bg-white shadow rounded-lg">
                 <div class="px-4 py-5 sm:p-6">
                     <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">My Projects</h3>
-                    <div class="mb-4">
-                        <button id="refresh-projects-btn"
-                            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">
-                            Refresh Projects
-                        </button>
+                    <!-- Project Search and Filters -->
+                    <div class="mb-6 space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- Text Search -->
+                            <div>
+                                <label for="project-search-input" class="block text-sm font-medium text-gray-700 mb-1">Search Projects</label>
+                                <input type="text" id="project-search-input"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="Search by name, description..."
+                                    onkeyup="filterProjects()">
+                            </div>
+                            
+                            <!-- Tag Filter -->
+                            <div>
+                                <label for="project-tag-filter" class="block text-sm font-medium text-gray-700 mb-1">Filter by Tag</label>
+                                <input type="text" id="project-tag-filter"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="Enter tag to filter..."
+                                    onkeyup="filterProjects()">
+                            </div>
+                            
+                            <!-- Status Filter -->
+                            <div>
+                                <label for="project-status-filter" class="block text-sm font-medium text-gray-700 mb-1">Filter by Status</label>
+                                <select id="project-status-filter"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    onchange="filterProjects()">
+                                    <option value="">All Statuses</option>
+                                    <option value="draft">Draft</option>
+                                    <option value="submitted">Submitted</option>
+                                    <option value="reviewer_approved">Reviewer Approved</option>
+                                    <option value="reviewer_rejected">Reviewer Rejected</option>
+                                    <option value="admin_approved">Admin Approved</option>
+                                    <option value="admin_rejected">Admin Rejected</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center">
+                            <button id="refresh-projects-btn"
+                                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">
+                                Refresh Projects
+                            </button>
+                            <button id="clear-filters-btn"
+                                class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 text-sm"
+                                onclick="clearProjectFilters()">
+                                Clear Filters
+                            </button>
+                        </div>
                     </div>
                     <div id="projects-list">
                         <div class="text-center text-gray-500 py-8">Loading projects...</div>
@@ -532,10 +618,10 @@ Modified RPC calls in functions:
                                     <div id="no-project-bar" class="bg-gray-400 transition-all duration-500" style="width: 0%"></div>
                                 </div>
                                 <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                    <span>ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  Approved</span>
-                                    <span>ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  Pending</span>
-                                    <span>ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  Draft</span>
-                                    <span>ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  No Projects</span>
+                                    <span> Approved</span>
+                                    <span>Pending</span>
+                                    <span>Draft</span>
+                                    <span>No Projects</span>
                                 </div>
                             </div>
                         </div>
@@ -2535,11 +2621,25 @@ function updateCollectedDataDisplay() {
     if (collectedData.length === 0) {
         collectedDataSection.style.display = 'none';
         actionButtonsSection.style.display = 'none';
+        
+        // Hide project tags section
+        const projectTagsSection = document.getElementById('project-tags-section');
+        if (projectTagsSection) {
+            projectTagsSection.style.display = 'none';
+        }
         return;
     }
 
     collectedDataSection.style.display = 'block';
     actionButtonsSection.style.display = 'block';
+    
+    // Show project tags section
+    const projectTagsSection = document.getElementById('project-tags-section');
+    if (projectTagsSection) {
+        projectTagsSection.style.display = 'block';
+        // Load popular tags when first shown
+        loadPopularTags();
+    }
 
     let html = '';
     collectedData.forEach((entry, entryIndex) => {
@@ -2547,7 +2647,7 @@ function updateCollectedDataDisplay() {
             <div class="mb-6 p-4 border border-gray-200 rounded-lg bg-white">
                 <div class="mb-3">
                     <h5 class="font-medium text-gray-900">CSI Path:</h5>
-                    <p class="text-sm text-gray-600">${entry.division} ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ ${entry.section} ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ ${entry.subsection} ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ ${entry.item}</p>
+                    <p class="text-sm text-gray-600">${entry.division}  ${entry.section}  ${entry.subsection}  ${entry.item}</p>
                    ${entry.additionalLevel ? `<p class="text-sm text-gray-600">Additional Level: ${entry.additionalLevel.name} > ${entry.additionalLevel.value}</p>` : ''}
                 </div>
                 <div class="space-y-2">
@@ -2660,6 +2760,367 @@ function removeAttribute(entryIndex, attrIndex) {
         }
 
         // =========================================================
+        // PROJECT TAGS MANAGEMENT FUNCTIONS
+        // =========================================================
+
+        // Global array to store project tags
+        let projectTags = [];
+
+        // Handle Enter key press in tag input
+        function handleTagInputKeypress(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                addProjectTag();
+            }
+        }
+
+        // Add a new tag to the project
+        function addProjectTag() {
+            // Get the tag input field
+            const editModalTagInput = document.getElementById('edit-modal-tags-input');
+            const mainTagInput = document.getElementById('project-tags-input');
+            const editModal = document.getElementById('edit-project-modal');
+            
+            let tagInput;
+            let tagsList;
+            
+            // Determine which context we're in and get the appropriate elements
+            if (editModal && editModal.style.display !== 'none' && editModalTagInput) {
+                tagInput = editModalTagInput;
+                tagsList = document.getElementById('edit-modal-tags-list');
+            } else if (mainTagInput) {
+                tagInput = mainTagInput;
+                tagsList = document.getElementById('project-tags-list');
+            }
+            
+            if (!tagInput || !tagsList) {
+                console.error('Could not find tag input field or tags list');
+                return;
+            }
+            
+            const tagValue = tagInput.value.trim().toLowerCase();
+            
+            if (!tagValue) {
+                showMessageBox('Please enter a tag.', true);
+                return;
+            }
+            
+            if (tagValue.length > 50) {
+                showMessageBox('Tag must be 50 characters or less.', true);
+                return;
+            }
+            
+            // Check if tag already exists in the DOM
+            const existingTags = Array.from(tagsList.querySelectorAll('.tag-item')).map(item => 
+                item.querySelector('.tag-text').textContent.trim()
+            );
+            
+            if (existingTags.includes(tagValue)) {
+                showMessageBox('This tag has already been added.', true);
+                return;
+            }
+            
+            console.log('ADDTAG DOM DEBUG - Adding tag:', tagValue, 'to existing:', existingTags);
+            
+            // Remove "no tags" message if it exists
+            const noTagsMsg = tagsList.querySelector('.no-tags-message');
+            if (noTagsMsg) {
+                noTagsMsg.remove();
+            }
+            
+            // Create new tag element (exactly like standard values)
+            const tagDiv = document.createElement('span');
+            tagDiv.className = 'tag-item inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 mr-2 mb-2';
+            tagDiv.innerHTML = `
+                <span class="tag-text">${escapeHtml(tagValue)}</span>
+                <button type="button" onclick="removeProjectTagFromDOM(this)" 
+                        class="ml-2 inline-flex items-center justify-center w-4 h-4 rounded-full text-blue-400 hover:bg-blue-200 hover:text-blue-600 focus:outline-none">
+                    <span class="sr-only">Remove tag</span>
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            `;
+            
+            // Append to DOM (like standard values)
+            tagsList.appendChild(tagDiv);
+            
+            // Show the tags display container
+            const tagsDisplay = tagInput.closest('.space-y-4').querySelector('[id$="-tags-display"]');
+            if (tagsDisplay) {
+                tagsDisplay.classList.remove('hidden');
+            }
+            
+            // Clear input
+            tagInput.value = '';
+            
+            console.log('ADDTAG DOM DEBUG - Tag added to DOM successfully');
+        }
+
+        // Remove a tag from the project (DOM-based like standard values)
+        function removeProjectTagFromDOM(button) {
+            const tagItem = button.closest('.tag-item');
+            if (tagItem) {
+                tagItem.remove();
+                console.log('REMOVE TAG DOM DEBUG - Tag removed from DOM');
+                
+                // Check if any tags remain, if not show "no tags" message
+                const tagsList = button.closest('[id$="-tags-list"]');
+                if (tagsList && tagsList.children.length === 0) {
+                    const tagsDisplay = tagsList.closest('[id$="-tags-display"]');
+                    if (tagsDisplay) {
+                        tagsDisplay.classList.add('hidden');
+                    }
+                }
+            }
+        }
+        
+        // Legacy remove function for backward compatibility
+        function removeProjectTag(tagToRemove) {
+            // Find and remove from DOM
+            const editModalTagsList = document.getElementById('edit-modal-tags-list');
+            const mainTagsList = document.getElementById('project-tags-list');
+            
+            [editModalTagsList, mainTagsList].forEach(tagsList => {
+                if (tagsList) {
+                    const tagItems = tagsList.querySelectorAll('.tag-item');
+                    tagItems.forEach(item => {
+                        const tagText = item.querySelector('.tag-text');
+                        if (tagText && tagText.textContent.trim() === tagToRemove) {
+                            item.remove();
+                        }
+                    });
+                }
+            });
+        }
+
+        // Update the visual display of tags
+        function updateTagsDisplay() {
+            // Update main form tags display
+            const tagsDisplay = document.getElementById('project-tags-display');
+            const tagsList = document.getElementById('project-tags-list');
+            
+            // Update edit modal tags display
+            const editModalTagsDisplay = document.getElementById('edit-modal-tags-display');
+            const editModalTagsList = document.getElementById('edit-modal-tags-list');
+            
+            // Determine which tags to display
+            let tagsToDisplay = [];
+            const editModal = document.getElementById('edit-project-modal');
+            
+            if (editModal && editModal.style.display !== 'none' && window.editingProjectData && window.editingProjectData.project) {
+                // In edit modal - use project data tags
+                tagsToDisplay = window.editingProjectData.project.tags || [];
+                console.log('Displaying tags from project data:', tagsToDisplay);
+            } else {
+                // In main form - use global projectTags
+                tagsToDisplay = projectTags || [];
+                console.log('Displaying tags from global array:', tagsToDisplay);
+            }
+            
+            if (tagsToDisplay.length === 0) {
+                if (tagsDisplay) tagsDisplay.classList.add('hidden');
+                if (editModalTagsDisplay) editModalTagsDisplay.classList.add('hidden');
+                return;
+            }
+            
+            // Generate tag HTML
+            let tagsHTML = '';
+            tagsToDisplay.forEach(tag => {
+                tagsHTML += `
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 mr-2 mb-2">
+                        ${escapeHtml(tag)}
+                        <button type="button" 
+                                onclick="removeProjectTag('${tag}')" 
+                                class="ml-2 inline-flex items-center justify-center w-4 h-4 rounded-full text-blue-400 hover:bg-blue-200 hover:text-blue-600 focus:outline-none">
+                            <span class="sr-only">Remove tag</span>
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </span>
+                `;
+            });
+            
+            // Update main form display
+            if (tagsDisplay && tagsList) {
+                tagsDisplay.classList.remove('hidden');
+                tagsList.innerHTML = tagsHTML;
+            }
+            
+            // Update edit modal display
+            if (editModalTagsDisplay && editModalTagsList) {
+                editModalTagsDisplay.classList.remove('hidden');
+                editModalTagsList.innerHTML = tagsHTML;
+            }
+        }
+
+        // Load and display popular tags from the system
+        async function loadPopularTags() {
+            try {
+                const { data, error } = await supabase.rpc('get_all_tags');
+                
+                if (error) {
+                    console.log('Popular tags feature not available (RPC function not found)');
+                    return;
+                }
+                
+                if (data && data.length > 0) {
+                    const suggestionsDiv = document.getElementById('tag-suggestions');
+                    const popularTagsList = document.getElementById('popular-tags-list');
+                    
+                    // Show top 10 most used tags
+                    const topTags = data.slice(0, 10);
+                    let suggestionsHTML = '';
+                    
+                    topTags.forEach(tagData => {
+                        const tag = tagData.tag;
+                        const count = tagData.usage_count;
+                        
+                        // Only show if not already added to current project
+                        if (!projectTags.includes(tag)) {
+                            suggestionsHTML += `
+                                <button type="button" 
+                                        onclick="addSuggestedTag('${tag}')"
+                                        class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-800 mr-2 mb-2 transition-colors duration-200">
+                                    ${escapeHtml(tag)} 
+                                    <span class="ml-1 text-xs text-gray-500">(${count})</span>
+                                </button>
+                            `;
+                        }
+                    });
+                    
+                    if (suggestionsHTML) {
+                        popularTagsList.innerHTML = suggestionsHTML;
+                        suggestionsDiv.classList.remove('hidden');
+                    }
+                }
+            } catch (error) {
+                console.error('Error in loadPopularTags:', error);
+            }
+        }
+
+        // Add a suggested tag
+        function addSuggestedTag(tag) {
+            if (!projectTags.includes(tag)) {
+                projectTags.push(tag);
+                updateTagsDisplay();
+                loadPopularTags(); // Refresh suggestions to remove the added tag
+            }
+        }
+
+        // Helper function to escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Collect tags from DOM for saving (like standard values collection)
+        function collectTagsFromDOM() {
+            const editModal = document.getElementById('edit-project-modal');
+            let tagsList;
+            
+            if (editModal && editModal.style.display !== 'none') {
+                tagsList = document.getElementById('edit-modal-tags-list');
+            } else {
+                tagsList = document.getElementById('project-tags-list');
+            }
+            
+            if (!tagsList) {
+                return [];
+            }
+            
+            const tags = Array.from(tagsList.querySelectorAll('.tag-item')).map(item => {
+                const tagText = item.querySelector('.tag-text');
+                return tagText ? tagText.textContent.trim() : null;
+            }).filter(tag => tag !== null);
+            
+            console.log('COLLECT TAGS DOM DEBUG - Collected from DOM:', tags);
+            return tags;
+        }
+
+        // Get project tags as JSONB for database storage
+        function getProjectTagsForDatabase() {
+            return JSON.stringify(projectTags);
+        }
+
+        // Set project tags from database (populate DOM like standard values)
+        function setProjectTagsFromDatabase(tagsJsonb) {
+            try {
+                console.log('SETFROMDB DOM DEBUG - Loading tags into DOM:', tagsJsonb, typeof tagsJsonb);
+                
+                let tagsArray = [];
+                if (!tagsJsonb) {
+                    tagsArray = [];
+                } else if (Array.isArray(tagsJsonb)) {
+                    tagsArray = tagsJsonb;
+                } else if (typeof tagsJsonb === 'string') {
+                    try {
+                        tagsArray = JSON.parse(tagsJsonb) || [];
+                    } catch (parseError) {
+                        console.warn('Failed to parse tags JSON string:', parseError);
+                        tagsArray = [];
+                    }
+                } else if (typeof tagsJsonb === 'object') {
+                    if (tagsJsonb.hasOwnProperty('length')) {
+                        tagsArray = Object.values(tagsJsonb);
+                    } else {
+                        tagsArray = [];
+                    }
+                } else {
+                    tagsArray = [];
+                }
+                
+                // Filter to valid strings
+                tagsArray = tagsArray.filter(tag => typeof tag === 'string' && tag.trim() !== '');
+                
+                console.log('SETFROMDB DOM DEBUG - Processed tags array:', tagsArray);
+                
+                // Populate DOM directly (like standard values)
+                const editModalTagsList = document.getElementById('edit-modal-tags-list');
+                const mainTagsList = document.getElementById('project-tags-list');
+                
+                [editModalTagsList, mainTagsList].forEach(tagsList => {
+                    if (tagsList) {
+                        // Clear existing tags
+                        tagsList.innerHTML = '';
+                        
+                        if (tagsArray.length > 0) {
+                            // Add each tag to DOM
+                            tagsArray.forEach(tag => {
+                                const tagDiv = document.createElement('span');
+                                tagDiv.className = 'tag-item inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 mr-2 mb-2';
+                                tagDiv.innerHTML = `
+                                    <span class="tag-text">${escapeHtml(tag)}</span>
+                                    <button type="button" onclick="removeProjectTagFromDOM(this)" 
+                                            class="ml-2 inline-flex items-center justify-center w-4 h-4 rounded-full text-blue-400 hover:bg-blue-200 hover:text-blue-600 focus:outline-none">
+                                        <span class="sr-only">Remove tag</span>
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                    </button>
+                                `;
+                                tagsList.appendChild(tagDiv);
+                            });
+                            
+                            // Show the tags display container
+                            const tagsDisplay = tagsList.closest('[id$="-tags-display"]');
+                            if (tagsDisplay) {
+                                tagsDisplay.classList.remove('hidden');
+                            }
+                        }
+                    }
+                });
+                
+                console.log('SETFROMDB DOM DEBUG - Tags populated in DOM successfully');
+                loadPopularTags();
+            } catch (error) {
+                console.error('Error loading project tags into DOM:', error);
+            }
+        }
+
+        // =========================================================
         // PROJECT MANAGEMENT FUNCTIONS (ENHANCED WITH DRAFT UPDATE)
         // =========================================================
 
@@ -2731,6 +3192,7 @@ function removeAttribute(entryIndex, attrIndex) {
                 additional_level_name: additionalLevel ? additionalLevel.name : null,
                 additional_level_value: additionalLevel ? additionalLevel.value : null,
                 additional_level_value_id: additionalLevelValueId,
+                tags: projectTags,
                 updated_at: new Date().toISOString()
             };
 
@@ -2828,6 +3290,7 @@ function removeAttribute(entryIndex, attrIndex) {
                 additional_level_name: additionalLevel ? additionalLevel.name : null,
                 additional_level_value: additionalLevel ? additionalLevel.value : null,
                 additional_level_value_id: additionalLevelValueId,
+                tags: projectTags,
                 status: projectStatus
             };
 
@@ -2933,227 +3396,389 @@ async function loadUserProjects() {
             throw error;
         }
 
-        const userId = parseInt(currentUser.id);
+        // Store projects globally for filtering
+        window.allUserProjects = projects || [];
         
-        if (projects && projects.length > 0) {
-            let html = '<div class="space-y-4">';
-            projects.forEach(project => {
-                const statusColor = {
-                    'draft': 'bg-gray-100 text-gray-800',
-                    'submitted': 'bg-yellow-100 text-yellow-800',
-                    'reviewer_approved': 'bg-blue-100 text-blue-800',
-                    'reviewer_rejected': 'bg-orange-100 text-orange-800',
-                    'admin_approved': 'bg-green-100 text-green-800',
-                    'admin_rejected': 'bg-red-100 text-red-800'
-                }[project.status] || 'bg-gray-100 text-gray-800';
+        // Apply current filters
+        displayFilteredProjects(window.allUserProjects);
+        
+        hideLoadingScreen();
+    } catch (error) {
+        console.error('Error loading projects:', error);
+        hideLoadingScreen();
+        showMessageBox(`Failed to load projects: ${error.message}`, true);
+    }
+}
+             
+// FIXED JAVASCRIPT SECTION - Replace lines 3262-3659 in CSIATTRIBUTESCREATIONV53.html
+
+// This goes after the loadUserProjects function ends at line 3261
+
+// Filter projects based on search criteria  
+function filterProjects() {
+    if (!window.allUserProjects) {
+        return;
+    }
+    
+    const searchTerm = document.getElementById('project-search-input')?.value.toLowerCase().trim() || '';
+    const tagFilter = document.getElementById('project-tag-filter')?.value.toLowerCase().trim() || '';
+    const statusFilter = document.getElementById('project-status-filter')?.value || '';
+    
+    let filteredProjects = window.allUserProjects;
+    
+    // Apply text search filter
+    if (searchTerm) {
+        filteredProjects = filteredProjects.filter(project => {
+            return (
+                project.project_name?.toLowerCase().includes(searchTerm) ||
+                project.division_description?.toLowerCase().includes(searchTerm) ||
+                project.section_description?.toLowerCase().includes(searchTerm) ||
+                project.detailed_section_description?.toLowerCase().includes(searchTerm) ||
+                project.item_description?.toLowerCase().includes(searchTerm) ||
+                project.division_code?.toLowerCase().includes(searchTerm) ||
+                project.section_code?.toLowerCase().includes(searchTerm) ||
+                project.detailed_section_code?.toLowerCase().includes(searchTerm) ||
+                project.item_code?.toLowerCase().includes(searchTerm) ||
+                project.additional_level_name?.toLowerCase().includes(searchTerm) ||
+                project.additional_level_value?.toLowerCase().includes(searchTerm)
+            );
+        });
+    }
+    
+    // Apply tag filter
+    if (tagFilter) {
+        filteredProjects = filteredProjects.filter(project => {
+            if (!project.tags || !Array.isArray(project.tags)) {
+                return false;
+            }
+            return project.tags.some(tag => 
+                typeof tag === 'string' && tag.toLowerCase().includes(tagFilter)
+            );
+        });
+    }
+    
+    // Apply status filter
+    if (statusFilter) {
+        filteredProjects = filteredProjects.filter(project => project.status === statusFilter);
+    }
+    
+    displayFilteredProjects(filteredProjects);
+}
+
+// Clear all project filters
+function clearProjectFilters() {
+    const searchInput = document.getElementById('project-search-input');
+    const tagInput = document.getElementById('project-tag-filter');
+    const statusSelect = document.getElementById('project-status-filter');
+    
+    if (searchInput) searchInput.value = '';
+    if (tagInput) tagInput.value = '';
+    if (statusSelect) statusSelect.value = '';
+    
+    // Redisplay all projects
+    if (window.allUserProjects) {
+        displayFilteredProjects(window.allUserProjects);
+    }
+}
+
+// New function to display filtered projects
+function displayFilteredProjects(projects) {
+    const projectsList = document.getElementById('projects-list');
+    const userId = parseInt(currentUser.id);
+        
+    if (projects && projects.length > 0) {
+        let html = '<div class="space-y-4">';
+        projects.forEach(project => {
+            const statusColor = {
+                'draft': 'bg-gray-100 text-gray-800',
+                'submitted': 'bg-yellow-100 text-yellow-800',
+                'reviewer_approved': 'bg-blue-100 text-blue-800',
+                'reviewer_rejected': 'bg-orange-100 text-orange-800',
+                'admin_approved': 'bg-green-100 text-green-800',
+                'admin_rejected': 'bg-red-100 text-red-800'
+            }[project.status] || 'bg-gray-100 text-gray-800';
+            
+            const statusText = {
+                'draft': 'DRAFT',
+                'submitted': 'PENDING REVIEW',
+                'reviewer_approved': 'PENDING ADMIN',
+                'reviewer_rejected': 'REVIEWER REJECTED',
+                'admin_approved': 'APPROVED',
+                'admin_rejected': 'ADMIN REJECTED'
+            }[project.status] || project.status.toUpperCase();
+
+            const isDraft = project.status === 'draft';
+            const isCreator = parseInt(project.created_by) === userId;
+            const isAdmin = currentUser.role === 'admin';
+            const attributeCount = project.project_attributes?.[0]?.count || 0;
                 
-                const statusText = {
-                    'draft': 'DRAFT',
-                    'submitted': 'PENDING REVIEW',
-                    'reviewer_approved': 'PENDING ADMIN',
-                    'reviewer_rejected': 'REVIEWER REJECTED',
-                    'admin_approved': 'APPROVED',
-                    'admin_rejected': 'ADMIN REJECTED'
-                }[project.status] || project.status.toUpperCase();
+            let roleText = '';
+            if (isAdmin) {
+                roleText = ' (Admin View)';
+            } else if (isCreator) {
+                roleText = ' (Creator)';
+            } else if (project.assigned_reviewer_id && parseInt(project.assigned_reviewer_id) === userId) {
+                roleText = ' (Reviewer)';
+            }
 
-                const isDraft = project.status === 'draft';
-                const isCreator = parseInt(project.created_by) === userId;
-                const isAdmin = currentUser.role === 'admin';
-                const attributeCount = project.project_attributes?.[0]?.count || 0;
-                
-                let roleText = '';
-                if (isAdmin) {
-                    roleText = ' (Admin View)';
-                } else if (isCreator) {
-                    roleText = ' (Creator)';
-                } else if (project.assigned_reviewer_id && parseInt(project.assigned_reviewer_id) === userId) {
-                    roleText = ' (Reviewer)';
-                }
-
-                html += `
-                    <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200">
-                        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                            <!-- Main Content Area -->
-                            <div class="flex-1 min-w-0">
-                                <!-- Project Header -->
-                                <div class="flex items-start justify-between mb-3">
-                                    <div class="flex-1">
-                                        <h4 class="text-lg font-medium text-gray-900 mb-1">${project.project_name}${roleText}</h4>
-                                        <div class="flex items-center gap-2 text-sm text-gray-500">
-                                            <span class="font-medium">Project ID:</span>
-                                            <span class="font-mono bg-gray-100 px-2 py-1 rounded text-xs font-semibold text-gray-700">#${project.id}</span>
-                                        </div>
+            html += `
+                <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200">
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        <!-- Main Content Area -->
+                        <div class="flex-1 min-w-0">
+                            <!-- Project Header -->
+                            <div class="flex items-start justify-between mb-3">
+                                <div class="flex-1">
+                                    <h4 class="text-lg font-medium text-gray-900 mb-1">${project.project_name}${roleText}</h4>
+                                    <div class="flex items-center gap-2 text-sm text-gray-500">
+                                        <span class="font-medium">Project ID:</span>
+                                        <span class="font-mono bg-gray-100 px-2 py-1 rounded text-xs font-semibold text-gray-700">#${project.id}</span>
                                     </div>
                                 </div>
-
-                                <!-- Enhanced CSI Path Display -->
-                                <div class="mt-3">
-                                    <p class="text-sm font-medium text-blue-600 mb-2">CSI Classification Path:</p>
-                                    <div class="bg-blue-50 border border-blue-200 rounded-md p-3 mb-3">
-                                        <div class="space-y-1 text-sm">
-                                            <!-- Division -->
-                                            <div class="flex items-start">
-                                                <span class="inline-block w-20 font-mono text-blue-700 font-semibold">${project.division_code}</span>
-                                                <span class="text-gray-700">${project.division_description || 'Division'}</span>
-                                            </div>
-                                            <!-- Section -->
-                                            <div class="flex items-start ml-4">
-                                                <span class="inline-block w-20 font-mono text-blue-600 font-medium">${project.section_code}</span>
-                                                <span class="text-gray-600">${project.section_description || 'Section'}</span>
-                                            </div>
-                                            <!-- Detailed Section -->
-                                            <div class="flex items-start ml-8">
-                                                <span class="inline-block w-20 font-mono text-blue-500">${project.detailed_section_code}</span>
-                                                <span class="text-gray-600">${project.detailed_section_description || 'Detailed Section'}</span>
-                                            </div>
-                                            <!-- Item -->
-                                            <div class="flex items-start ml-12">
-                                                <span class="inline-block w-20 font-mono text-blue-400 font-medium">${project.item_code}</span>
-                                                <span class="text-gray-700 font-medium">${project.item_description || 'Item'}</span>
-                                            </div>
-                                            ${project.additional_level_name ? `
-                                            <!-- Additional Level -->
-                                            <div class="flex items-start ml-16 pt-1 border-t border-blue-200 mt-2">
-                                                <span class="inline-block w-20 text-xs text-purple-600 font-medium">${project.additional_level_name}:</span>
-                                                <span class="text-gray-700 text-xs font-medium">${project.additional_level_value}</span>
-                                            </div>` : ''}
-                                        </div>
-                                    </div>
-                                </div>
-                                               
-                                <!-- Enhanced Project Metadata with Icons -->
-                                <div class="flex flex-wrap gap-3 text-sm text-gray-500">
-                                    <span class="flex items-center">
-                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
-                                        </svg>
-                                        ${attributeCount} attribute${attributeCount !== 1 ? 's' : ''}
-                                    </span>
-                                    <span class="flex items-center">
-                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 0h6m-6 0l-2 13a2 2 0 002 2h8a2 2 0 002-2L16 7"></path>
-                                        </svg>
-                                        Created: ${new Date(project.created_at).toLocaleDateString()}
-                                    </span>
-                                    ${project.submitted_at ? `
-                                    <span class="flex items-center">
-                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
-                                        </svg>
-                                        Submitted: ${new Date(project.submitted_at).toLocaleDateString()}
-                                    </span>` : ''}
-                                    ${project.reviewed_at ? `
-                                    <span class="flex items-center">
-                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                        Reviewed: ${new Date(project.reviewed_at).toLocaleDateString()}
-                                    </span>` : ''}
-                                </div>
-
-                                ${project.reviewer_comments ? `
-                                <!-- Enhanced Review Comments -->
-                                <div class="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-md">
-                                    <div class="flex items-start">
-                                        <svg class="w-5 h-5 text-amber-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10m0 0V6a2 2 0 00-2-2H9a2 2 0 00-2 2v2m0 0v10a2 2 0 002 2h8a2 2 0 002-2V8"></path>
-                                        </svg>
-                                        <div>
-                                            <div class="text-sm font-medium text-amber-800">Review Comments:</div>
-                                            <div class="text-sm text-amber-700 mt-1">${project.reviewer_comments}</div>
-                                        </div>
-                                    </div>
-                                </div>` : ''}
                             </div>
 
-                            <!-- Actions Area -->
-                            <div class="flex flex-col sm:flex-row items-center gap-3 lg:ml-6">
-                                <!-- Action Buttons -->
-                                <div class="flex items-center gap-2">
-                                    <!-- Always show view button -->
-                                    <button onclick="openViewProjectModal(${project.id})" 
-                                            class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm font-medium transition-colors duration-200 flex items-center">
-                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                        </svg>
-                                        View
-                                    </button>
-
-                                    ${((isDraft || project.status === 'reviewer_rejected' || project.status === 'admin_rejected') && isCreator) || isAdmin ? `
-                                    <button onclick="openEditProjectModal(${project.id})" 
-                                            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium transition-colors duration-200 flex items-center">
-                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                        </svg>
-                                        ${isAdmin ? 'Edit' : (isDraft ? 'Edit Draft' : 'Modify & Resubmit')}
-                                    </button>` : ''}
-
-                                    ${isAdmin && !isDraft ? `
-                                    <button onclick="modifyRejectedProject(${project.id})" 
-                                            class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 text-sm font-medium transition-colors duration-200 flex items-center">
-                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                        </svg>
-                                        Admin Edit
-                                    </button>` : ''}
-
-                                    ${isAdmin ? `
-                                    <button data-project-id="${project.id}" data-project-name="${project.project_name}" 
-                                            class="delete-project-btn px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium transition-colors duration-200 flex items-center">
-                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                        </svg>
-                                        Delete
-                                    </button>` : ''}
-
-                                    ${(isDraft && isCreator && !isAdmin) ? `
-                                    <button data-project-id="${project.id}" data-project-name="${project.project_name}" 
-                                            class="delete-project-btn px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium transition-colors duration-200 flex items-center">
-                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                        </svg>
-                                        Delete Draft
-                                    </button>` : ''}
+                            <!-- Enhanced CSI Path Display -->
+                            <div class="mt-3">
+                                <p class="text-sm font-medium text-blue-600 mb-2">CSI Classification Path:</p>
+                                <div class="bg-blue-50 border border-blue-200 rounded-md p-3 mb-3">
+                                    <div class="space-y-1 text-sm">
+                                        <!-- Division -->
+                                        <div class="flex items-start">
+                                            <span class="inline-block w-20 font-mono text-blue-700 font-semibold">${project.division_code}</span>
+                                            <span class="text-gray-700">${project.division_description || 'Division'}</span>
+                                        </div>
+                                        <!-- Section -->
+                                        <div class="flex items-start ml-4">
+                                            <span class="inline-block w-20 font-mono text-blue-600 font-medium">${project.section_code}</span>
+                                            <span class="text-gray-600">${project.section_description || 'Section'}</span>
+                                        </div>
+                                        <!-- Detailed Section -->
+                                        <div class="flex items-start ml-8">
+                                            <span class="inline-block w-20 font-mono text-blue-500">${project.detailed_section_code}</span>
+                                            <span class="text-gray-600">${project.detailed_section_description || 'Detailed Section'}</span>
+                                        </div>
+                                        <!-- Item -->
+                                        <div class="flex items-start ml-12">
+                                            <span class="inline-block w-20 font-mono text-blue-400 font-medium">${project.item_code}</span>
+                                            <span class="text-gray-700 font-medium">${project.item_description || 'Item'}</span>
+                                        </div>
+                                        ${project.additional_level_name ? `
+                                        <!-- Additional Level -->
+                                        <div class="flex items-start ml-16 pt-1 border-t border-blue-200 mt-2">
+                                            <span class="inline-block w-20 text-xs text-purple-600 font-medium">${project.additional_level_name}:</span>
+                                            <span class="text-gray-700 text-xs font-medium">${project.additional_level_value}</span>
+                                        </div>` : ''}
+                                    </div>
                                 </div>
+                            </div>
+                                           
+                            <!-- Enhanced Project Metadata with Icons -->
+                            <div class="flex flex-wrap gap-3 text-sm text-gray-500">
+                                <span class="flex items-center">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                                    </svg>
+                                    ${attributeCount} attribute${attributeCount !== 1 ? 's' : ''}
+                                </span>
+                                <span class="flex items-center">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 0h6m-6 0l-2 13a2 2 0 002 2h8a2 2 0 002-2L16 7"></path>
+                                    </svg>
+                                    Created: ${new Date(project.created_at).toLocaleDateString()}
+                                </span>
+                                ${project.submitted_at ? `
+                                <span class="flex items-center">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                                    </svg>
+                                    Submitted: ${new Date(project.submitted_at).toLocaleDateString()}
+                                </span>` : ''}
+                                ${project.reviewed_at ? `
+                                <span class="flex items-center">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    Reviewed: ${new Date(project.reviewed_at).toLocaleDateString()}
+                                </span>` : ''}
+                            </div>
 
-                                <!-- Status Badge -->
-                                <div class="flex items-center">
-                                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${statusColor} border border-opacity-20">
-                                        ${getStatusIcon(project.status)}
-                                        ${statusText}
-                                    </span>
+                            <!-- Project Tags Display -->
+                            ${project.tags && project.tags.length > 0 ? `
+                            <div class="mt-3">
+                                <div class="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                                    <svg class="w-4 h-4 mr-1.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                                    </svg>
+                                    Tags:
                                 </div>
+                                <div class="flex flex-wrap gap-1">
+                                    ${(Array.isArray(project.tags) ? project.tags : (typeof project.tags === 'string' ? JSON.parse(project.tags || '[]') : [])).map(tag => `
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            ${escapeHtml(tag)}
+                                        </span>
+                                    `).join('')}
+                                </div>
+                            </div>` : ''}
+
+                            ${project.reviewer_comments ? `
+                            <!-- Enhanced Review Comments -->
+                            <div class="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-md">
+                                <div class="flex items-start">
+                                    <svg class="w-5 h-5 text-amber-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10m0 0V6a2 2 0 00-2-2H9a2 2 0 00-2 2v2m0 0v10a2 2 0 002 2h8a2 2 0 002-2V8"></path>
+                                    </svg>
+                                    <div>
+                                        <div class="text-sm font-medium text-amber-800">Review Comments:</div>
+                                        <div class="text-sm text-amber-700 mt-1">${project.reviewer_comments}</div>
+                                    </div>
+                                </div>
+                            </div>` : ''}
+                        </div>
+
+                        <!-- Actions Area -->
+                        <div class="flex flex-col lg:flex-row gap-3 lg:items-center">
+                            <!-- Action Buttons Container -->
+                            <div class="flex flex-wrap gap-2 justify-end">
+                                ${((isDraft && isCreator) || isAdmin || (project.status === 'reviewer_rejected' && isCreator)) ? `
+                                <button onclick="openEditProjectModal(${project.id})" 
+                                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium transition-colors duration-200 flex items-center">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                    </svg>
+                                    ${isAdmin ? 'Admin Edit' : 'Edit'}
+                                </button>` : ''}
+
+                                ${((project.status === 'submitted' || project.status === 'reviewer_approved') && isCreator && !isAdmin) ? `
+                                <button onclick="cancelProjectSubmission(${project.id})" 
+                                        class="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-sm font-medium transition-colors duration-200 flex items-center">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
+                                    </svg>
+                                    Cancel Submission
+                                </button>` : ''}
+
+                                ${isAdmin ? `
+                                <button data-project-id="${project.id}" data-project-name="${project.project_name}" 
+                                        class="delete-project-btn px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium transition-colors duration-200 flex items-center">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                    Delete
+                                </button>` : ''}
+
+                                ${(isDraft && isCreator && !isAdmin) ? `
+                                <button data-project-id="${project.id}" data-project-name="${project.project_name}" 
+                                        class="delete-project-btn px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium transition-colors duration-200 flex items-center">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                    Delete Draft
+                                </button>` : ''}
+                            </div>
+
+                            <!-- Status Badge -->
+                            <div class="flex items-center">
+                                <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${statusColor} border border-opacity-20">
+                                    ${getStatusIcon(project.status)}
+                                    ${statusText}
+                                </span>
                             </div>
                         </div>
                     </div>
-                `;
+                </div>
+            `;
+        });
+        html += '</div>';
+        projectsList.innerHTML = html;
+    } else {
+        projectsList.innerHTML = '<div class="text-center text-gray-500 py-8">No projects found.</div>';
+    }
+    
+    // Add event listeners for delete buttons
+    setTimeout(() => {
+        document.querySelectorAll('.delete-project-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const projectId = this.getAttribute('data-project-id');
+                const projectName = this.getAttribute('data-project-name');
+                console.log('Delete button clicked for project:', projectId, projectName);
+                deleteProject(parseInt(projectId), projectName);
             });
-            html += '</div>';
-            projectsList.innerHTML = html;
-        } else {
-            projectsList.innerHTML = '<div class="text-center text-gray-500 py-8">No projects found.</div>';
-        }
-        hideLoadingScreen();
-        // Add event listeners for delete buttons
-        setTimeout(() => {
-            document.querySelectorAll('.delete-project-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const projectId = this.getAttribute('data-project-id');
-                    const projectName = this.getAttribute('data-project-name');
-                    console.log('Delete button clicked for project:', projectId, projectName);
-                    deleteProject(parseInt(projectId), projectName);
-                });
-            });
-        }, 100);
-    } catch (error) {
-        hideLoadingScreen();
-        console.error('Error loading user projects:', error);
-        const projectsList = document.getElementById('projects-list');
-        projectsList.innerHTML = `<div class="text-center text-red-500 py-8">Failed to load projects. Error: ${error.message}</div>`;
+        });
+    }, 100);
+}
+
+// Update loadUserProjects to use the new approach
+// You need to modify the existing loadUserProjects function to:
+// 1. Store projects in window.allUserProjects = projects || [];
+// 2. Call displayFilteredProjects(window.allUserProjects); instead of the current HTML generation
+// 3. Remove the existing forEach loop and HTML generation code
+// Filter projects based on search criteria
+function filterProjects() {
+    if (!window.allUserProjects) {
+        return;
+    }
+    
+    const searchTerm = document.getElementById('project-search-input')?.value.toLowerCase().trim() || '';
+    const tagFilter = document.getElementById('project-tag-filter')?.value.toLowerCase().trim() || '';
+    const statusFilter = document.getElementById('project-status-filter')?.value || '';
+    
+    let filteredProjects = window.allUserProjects;
+    
+    // Apply text search filter
+    if (searchTerm) {
+        filteredProjects = filteredProjects.filter(project => {
+            return (
+                project.project_name?.toLowerCase().includes(searchTerm) ||
+                project.division_description?.toLowerCase().includes(searchTerm) ||
+                project.section_description?.toLowerCase().includes(searchTerm) ||
+                project.detailed_section_description?.toLowerCase().includes(searchTerm) ||
+                project.item_description?.toLowerCase().includes(searchTerm) ||
+                project.division_code?.toLowerCase().includes(searchTerm) ||
+                project.section_code?.toLowerCase().includes(searchTerm) ||
+                project.detailed_section_code?.toLowerCase().includes(searchTerm) ||
+                project.item_code?.toLowerCase().includes(searchTerm) ||
+                project.additional_level_name?.toLowerCase().includes(searchTerm) ||
+                project.additional_level_value?.toLowerCase().includes(searchTerm)
+            );
+        });
+    }
+    
+    // Apply tag filter
+    if (tagFilter) {
+        filteredProjects = filteredProjects.filter(project => {
+            if (!project.tags || !Array.isArray(project.tags)) {
+                return false;
+            }
+            return project.tags.some(tag => 
+                typeof tag === 'string' && tag.toLowerCase().includes(tagFilter)
+            );
+        });
+    }
+    
+    // Apply status filter
+    if (statusFilter) {
+        filteredProjects = filteredProjects.filter(project => project.status === statusFilter);
+    }
+    
+    displayFilteredProjects(filteredProjects);
+}
+
+// Clear all project filters
+function clearProjectFilters() {
+    const searchInput = document.getElementById('project-search-input');
+    const tagInput = document.getElementById('project-tag-filter');
+    const statusSelect = document.getElementById('project-status-filter');
+    
+    if (searchInput) searchInput.value = '';
+    if (tagInput) tagInput.value = '';
+    if (statusSelect) statusSelect.value = '';
+    
+    // Redisplay all projects
+    if (window.allUserProjects) {
+        displayFilteredProjects(window.allUserProjects);
     }
 }
+
 
 
 async function deleteProject(projectId) {
@@ -3244,6 +3869,50 @@ async function deleteProject(projectId) {
         showMessageBox(`Failed to delete project: ${error.message}`, true);
     }
 }
+
+// =========================================================
+// CANCEL PROJECT SUBMISSION
+// =========================================================
+
+async function cancelProjectSubmission(projectId) {
+    const confirmMessage = 'Are you sure you want to cancel this submission?\n\nThis will revert the project back to draft status and remove it from the review queue.';
+    
+    if (!confirm(confirmMessage)) {
+        return;
+    }
+    
+    try {
+        showLoadingScreen('Canceling submission...', 'Please wait');
+        
+        // Call RPC function to cancel submission
+        const { data, error } = await supabase.rpc('cancel_project_submission', {
+            project_id_param: projectId,
+            user_id_param: currentUser.id
+        });
+        
+        if (error) {
+            throw error;
+        }
+        
+        if (!data.success) {
+            throw new Error(data.message || 'Failed to cancel submission');
+        }
+        
+        hideLoadingScreen();
+        showMessageBox('Submission canceled successfully! Project reverted to draft status.');
+        
+        // Refresh the projects list
+        if (typeof loadUserProjects === 'function') {
+            await loadUserProjects();
+        }
+        
+    } catch (error) {
+        console.error('Error canceling submission:', error);
+        hideLoadingScreen();
+        showMessageBox(`Failed to cancel submission: ${error.message}`, true);
+    }
+}
+
 // =========================================================
 // PROJECT EDITING MODAL
 // =========================================================
@@ -3882,6 +4551,11 @@ async function saveEditedProject() {
         
         // Update project using appropriate function based on user role
         let data, error;
+        
+        // Get the actual tags from the DOM (like standard values)
+        const tagsToSave = collectTagsFromDOM();
+        console.log('DEBUG - About to save these tags to database (collected from DOM):', tagsToSave);
+        
         if (currentUser.role === 'admin') {
             const result = await supabase.rpc('admin_update_project', {
                 project_id_param: project.id,
@@ -3897,7 +4571,8 @@ async function saveEditedProject() {
                 division_description_param: project.division_description || '',
                 section_description_param: project.section_description || '',
                 detailed_section_description_param: project.detailed_section_description || '',
-                item_description_param: project.item_description || ''
+                item_description_param: project.item_description || '',
+                tags_param: tagsToSave
             });
             data = result.data;
             error = result.error;
@@ -3916,7 +4591,8 @@ async function saveEditedProject() {
                 division_description_param: project.division_description || '',
                 section_description_param: project.section_description || '',
                 detailed_section_description_param: project.detailed_section_description || '',
-                item_description_param: project.item_description || ''
+                item_description_param: project.item_description || '',
+                tags_param: tagsToSave
             });
             data = result.data;
             error = result.error;
@@ -4121,6 +4797,10 @@ async function confirmSubmission() {
                 collectedData = [];
                 currentProject = null;
                 loadedDraftProject = null;
+                
+                // Clear project tags
+                clearProjectTags();
+                
                 draftInfo.style.display = 'none';
                 updateCollectedDataDisplay();
                 showMessageBox('All data cleared.');
@@ -4276,10 +4956,13 @@ async function handleEditModalConfirmSubmit() {
             return;
         }
         
+        // Define project variable at function scope
+        const project = window.editingProjectData.project;
+        
         showLoadingScreen('Submitting project for review...', 'Please wait');
         
         // Store project ID before saving (in case saveEditedProject clears the data)
-        const projectId = window.editingProjectData.project.id;
+        const projectId = project.id;
         
         // First save the changes (but don't clear project data)
         try {
@@ -4287,9 +4970,9 @@ async function handleEditModalConfirmSubmit() {
                 throw new Error('No project is currently being edited');
             }
             
-            showLoadingScreen('Saving project changes...', 'Please wait');
+            console.log('DEBUG - Saving project with tags:', projectTags);
             
-            const project = window.editingProjectData.project;
+            showLoadingScreen('Saving project changes...', 'Please wait');
             
             // Use the original project's CSI path (no changes allowed)
             const divisionCode = project.division_code;
@@ -4354,7 +5037,8 @@ async function handleEditModalConfirmSubmit() {
                     division_description_param: project.division_description || '',
                     section_description_param: project.section_description || '',
                     detailed_section_description_param: project.detailed_section_description || '',
-                    item_description_param: project.item_description || ''
+                    item_description_param: project.item_description || '',
+                    tags_param: (window.editingProjectData && window.editingProjectData.project && window.editingProjectData.project.tags) || projectTags || []
                 });
                 data = result.data;
                 error = result.error;
@@ -4373,7 +5057,8 @@ async function handleEditModalConfirmSubmit() {
                     division_description_param: project.division_description || '',
                     section_description_param: project.section_description || '',
                     detailed_section_description_param: project.detailed_section_description || '',
-                    item_description_param: project.item_description || ''
+                    item_description_param: project.item_description || '',
+                    tags_param: (window.editingProjectData && window.editingProjectData.project && window.editingProjectData.project.tags) || projectTags || []
                 });
                 data = result.data;
                 error = result.error;
@@ -4445,6 +5130,15 @@ async function populateEditModal(project, attributes) {
         
         // Populate read-only CSI path fields
         await populateReadOnlyCSIPath(project);
+        
+        // Load existing project tags
+        console.log('Loading project tags:', project.tags);
+        setProjectTagsFromDatabase(project.tags);
+        
+        // Force update tags display for edit modal after a short delay to ensure DOM is ready
+        setTimeout(() => {
+            updateTagsDisplay();
+        }, 100);
         
         // Load attributes
         loadEditModalAttributesDisplay(attributes);
@@ -4727,7 +5421,7 @@ function updateCSIChangesDisplay() {
         
         for (const [projectId, changes] of csiPendingChanges) {
             const originalProject = csiProjectsData.find(p => p.id === projectId);
-            changesHTML += `<div class="mt-1">ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¢ <strong>${originalProject.project_name}</strong>: CSI path modifications</div>`;
+            changesHTML += `<div class="mt-1"> <strong>${originalProject.project_name}</strong>: CSI path modifications</div>`;
         }
         
         changesList.innerHTML = changesHTML;
@@ -5243,6 +5937,16 @@ async function openEditProjectModal(projectId) {
             projectNameField.value = '';
         }
         
+        // Reset submit button and reviewer selection visibility
+        const submitBtn = document.getElementById('edit-modal-submit-btn');
+        const reviewerSelection = document.getElementById('edit-modal-reviewer-selection');
+        if (submitBtn) {
+            submitBtn.style.display = 'none';
+        }
+        if (reviewerSelection) {
+            reviewerSelection.style.display = 'none';
+        }
+        
         // Determine which function to call based on user role
         let result;
         if (currentUser.role === 'admin') {
@@ -5270,11 +5974,36 @@ async function openEditProjectModal(projectId) {
         // Store the project data globally for saving
         window.editingProjectData = { project, attributes };
         
+        // Ensure project tags are properly initialized from database
+        if (!project.tags || !Array.isArray(project.tags)) {
+            window.editingProjectData.project.tags = [];
+        } else {
+            window.editingProjectData.project.tags = [...project.tags];
+        }
+        
+        console.log('PROJECT INIT DEBUG - Project from database:', project);
+        console.log('PROJECT INIT DEBUG - Tags from database:', project.tags);
+        console.log('PROJECT INIT DEBUG - Stored in editingProjectData:', window.editingProjectData.project.tags);
+        
         // Populate the modal
         await populateEditModal(project, attributes);
         
         // Load reviewers for potential submission
         await loadEditModalReviewers();
+        
+        // Show submit button for creators editing their own draft or rejected projects
+        if (submitBtn && currentUser.role !== 'admin') {
+            const isDraft = project.status === 'draft';
+            const isRejected = project.status === 'reviewer_rejected' || project.status === 'admin_rejected';
+            const isCreator = parseInt(project.created_by) === parseInt(currentUser.id);
+            
+            if (isCreator && (isDraft || isRejected)) {
+                submitBtn.style.display = 'inline-block';
+                submitBtn.textContent = isRejected ? 'Resubmit for Review' : 'Submit for Review';
+            } else {
+                submitBtn.style.display = 'none';
+            }
+        }
         
         hideLoadingScreen();
         showModal(document.getElementById('edit-project-modal'));
@@ -7219,7 +7948,7 @@ function updateChangesSummary() {
         const changeList = Object.keys(changes).map(key => {
             const oldValue = project[key] || '';
             const newValue = changes[key];
-            return `${key.replace(/_/g, ' ')}: "${oldValue}" ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ "${newValue}"`;
+            return `${key.replace(/_/g, ' ')}: "${oldValue}"  "${newValue}"`;
         }).join(', ');
         
         html += `<div class="mb-1"><strong>${project.project_name}:</strong> ${changeList}</div>`;
@@ -7425,6 +8154,7 @@ window.discardAllCSIChanges = discardAllCSIChanges;
         window.openEditProjectModal = openEditProjectModal;
         window.submitEditedProjectForReview = submitEditedProjectForReview;
         window.deleteProject = deleteProject;
+        window.cancelProjectSubmission = cancelProjectSubmission;
         window.editProjectAttribute = editProjectAttribute;
         window.saveEditedProject = saveEditedProject;
         window.closeModal = closeModal;
@@ -7591,6 +8321,36 @@ window.openViewProjectModal = openViewProjectModal;
         <!-- Attributes will be loaded here -->
     </div>
 </div>
+                    </div>
+
+                    <!-- Project Tags Section -->
+                    <div id="edit-modal-tags-section" class="p-4 bg-gray-50 rounded-lg">
+                        <h4 class="font-medium text-gray-900 mb-3">Project Tags</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="edit-modal-tags-input" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Add Tags for Easy Search
+                                </label>
+                                <div class="flex space-x-2">
+                                    <input type="text" id="edit-modal-tags-input"
+                                        class="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                        placeholder="Enter a tag"
+                                        onkeypress="if(event.key==='Enter'){event.preventDefault();addProjectTag();}">
+                                    <button onclick="addProjectTag()"
+                                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                        Add Tag
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Tags Display -->
+                            <div id="edit-modal-tags-display" class="hidden">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Current Tags:</label>
+                                <div id="edit-modal-tags-list" class="flex flex-wrap gap-2">
+                                    <!-- Tags will be displayed here -->
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Reviewer Selection Section (initially hidden) -->
