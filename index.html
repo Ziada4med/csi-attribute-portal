@@ -3685,7 +3685,7 @@ function displayFilteredProjects(projects) {
                         <div class="flex flex-col lg:flex-row gap-3 lg:items-center">
                             <!-- Action Buttons Container -->
                             <div class="flex flex-wrap gap-2 justify-end">
-                                ${((isDraft && isCreator) || isAdmin || (project.status === 'reviewer_rejected' && isCreator)) ? `
+                                ${((isDraft && isCreator) || isAdmin || ((project.status === 'reviewer_rejected' || project.status === 'admin_rejected') && isCreator)) ? `
                                 <button onclick="openEditProjectModal(${project.id})" 
                                         class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium transition-colors duration-200 flex items-center">
                                     <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -3693,6 +3693,16 @@ function displayFilteredProjects(projects) {
                                     </svg>
                                     ${isAdmin ? 'Admin Edit' : 'Edit'}
                                 </button>` : ''}
+
+                                <!-- View Button - Available for all projects -->
+                                <button onclick="openViewProjectModal(${project.id})" 
+                                        class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm font-medium transition-colors duration-200 flex items-center">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                    View
+                                </button>
 
                                 ${((project.status === 'submitted' || project.status === 'reviewer_approved') && isCreator && !isAdmin) ? `
                                 <button onclick="cancelProjectSubmission(${project.id})" 
@@ -3712,13 +3722,13 @@ function displayFilteredProjects(projects) {
                                     Delete
                                 </button>` : ''}
 
-                                ${(isDraft && isCreator && !isAdmin) ? `
+                                ${((isDraft || project.status === 'admin_rejected') && isCreator && !isAdmin) ? `
                                 <button data-project-id="${project.id}" data-project-name="${project.project_name}" 
                                         class="delete-project-btn px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium transition-colors duration-200 flex items-center">
                                     <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                     </svg>
-                                    Delete Draft
+                                    ${project.status === 'admin_rejected' ? 'Delete Rejected Project' : 'Delete Draft'}
                                 </button>` : ''}
                             </div>
 
@@ -4527,8 +4537,20 @@ async function saveEditedProject() {
         const sectionCode = project.section_code;
         const detailedSectionCode = project.detailed_section_code;
         const itemCode = project.item_code;
-        const levelName = project.additional_level_name || null;
-        const levelValue = project.additional_level_value || null;
+        
+        // FIXED: Read additional level values from the edit modal DOM elements
+        const levelNameElement = document.getElementById('edit-modal-level-name');
+        const levelValueElement = document.getElementById('edit-modal-level-value');
+        
+        const levelName = levelNameElement ? levelNameElement.value.trim() || null : null;
+        const levelValue = levelValueElement ? levelValueElement.value.trim() || null : null;
+        
+        console.log('SAVE DEBUG - Additional level data from DOM:');
+        console.log('- levelName:', levelName);
+        console.log('- levelValue:', levelValue);
+        console.log('- levelNameElement:', levelNameElement);
+        console.log('- levelValueElement:', levelValueElement);
+        
         const projectName = document.getElementById('edit-project-name').value.trim();
 
         if (!projectName) {
@@ -4892,19 +4914,150 @@ async function confirmSubmission() {
 }        // =========================================================
        async function populateReadOnlyCSIPath(project) {
     try {
+        console.log('POPULATE DEBUG - Starting populateReadOnlyCSIPath with project:', project);
+        
         // Use stored project data directly, fallback to codes only if descriptions fail
         document.getElementById('edit-modal-division-display').value = `${project.division_code}`;
         document.getElementById('edit-modal-section-display').value = `${project.section_code}`;
         document.getElementById('edit-modal-subsection-display').value = `${project.detailed_section_code}`;
         document.getElementById('edit-modal-item-display').value = `${project.item_code}`;
         
-        // Set additional level info
-        if (project.additional_level_name) {
-            document.getElementById('edit-modal-level-name-display').value = project.additional_level_name;
-            document.getElementById('edit-modal-level-value-display').value = project.additional_level_value || '';
+        // ADDED: Handle editable additional level fields (this was missing!)
+        console.log('POPULATE DEBUG - Project additional level data:');
+        console.log('- additional_level_name:', project.additional_level_name);
+        console.log('- additional_level_value:', project.additional_level_value);
+        
+        // FIXED: Setup additional level if EITHER name OR value exists (handle DB inconsistencies)
+        if (project.additional_level_name || project.additional_level_value) {
+            // Use fallback name if missing
+            const levelName = project.additional_level_name || 'Additional Level';
+            const levelValue = project.additional_level_value;
+            
+            console.log('POPULATE DEBUG - Setting editable level name to:', levelName);
+            const levelNameElement = document.getElementById('edit-modal-level-name');
+            if (levelNameElement) {
+                levelNameElement.value = levelName;
+                console.log('POPULATE DEBUG - Level name element found and set');
+            } else {
+                console.log('POPULATE DEBUG - Level name element NOT found! Creating it...');
+                // Create the element if it doesn't exist
+                const levelSection = document.querySelector('#edit-project-modal .space-y-6');
+                if (levelSection) {
+                    const levelDiv = document.createElement('div');
+                    levelDiv.innerHTML = `
+                        <h4 class="text-sm font-medium text-gray-900 mb-3">Additional Level</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Level Name</label>
+                                <input type="text" id="edit-modal-level-name" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Level Value</label>
+                                <select id="edit-modal-level-value" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                    <option value="">Select value</option>
+                                </select>
+                            </div>
+                        </div>
+                    `;
+                    levelSection.appendChild(levelDiv);
+                    console.log('POPULATE DEBUG - Created additional level elements');
+                    
+                    // Now try to set the name again
+                    const newLevelNameElement = document.getElementById('edit-modal-level-name');
+                    if (newLevelNameElement) {
+                        newLevelNameElement.value = levelName;
+                        console.log('POPULATE DEBUG - Set level name in newly created element');
+                    }
+                }
+            }
+            
+            if (levelValue) {
+                console.log('POPULATE DEBUG - Loading level values for CSI path:', {
+                    division: project.division_code,
+                    section: project.section_code,
+                    detailed_section: project.detailed_section_code,
+                    item: project.item_code
+                });
+                
+                await loadEditModalLevelValues(project.division_code, project.section_code, project.detailed_section_code, project.item_code);
+                
+                console.log('POPULATE DEBUG - Setting editable level value to:', levelValue);
+                const levelValueElement = document.getElementById('edit-modal-level-value');
+                if (levelValueElement) {
+                    console.log('POPULATE DEBUG - Level value element found, available options:', Array.from(levelValueElement.options).map(o => o.value));
+                    
+                    levelValueElement.value = levelValue;
+                    
+                    console.log('POPULATE DEBUG - Level value element after setting:', levelValueElement.value);
+                    
+                    // If the value wasn't set, it might not exist in the options
+                    if (levelValueElement.value !== levelValue) {
+                        console.log('POPULATE DEBUG - Value not found in options, adding it manually');
+                        const option = document.createElement('option');
+                        option.value = levelValue;
+                        option.textContent = levelValue;
+                        levelValueElement.appendChild(option);
+                        levelValueElement.value = levelValue;
+                        console.log('POPULATE DEBUG - Added and set value:', levelValueElement.value);
+                    }
+                } else {
+                    console.log('POPULATE DEBUG - Level value element NOT found! Creating dropdown...');
+                    const levelNameElement = document.getElementById('edit-modal-level-name');
+                    if (levelNameElement && levelNameElement.parentElement && levelNameElement.parentElement.parentElement) {
+                        const levelContainer = levelNameElement.parentElement.parentElement;
+                        const valueDiv = levelContainer.querySelector('div:last-child');
+                        if (valueDiv) {
+                            valueDiv.innerHTML = `
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Level Value</label>
+                                <select id="edit-modal-level-value" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                    <option value="">Select value</option>
+                                    <option value="${levelValue}">${levelValue}</option>
+                                </select>
+                            `;
+                            document.getElementById('edit-modal-level-value').value = levelValue;
+                            console.log('POPULATE DEBUG - Created and set level value dropdown');
+                        }
+                    }
+                }
+            } else {
+                console.log('POPULATE DEBUG - No additional_level_value to set');
+            }
         } else {
-            document.getElementById('edit-modal-level-name-display').value = '';
-            document.getElementById('edit-modal-level-value-display').value = '';
+            console.log('POPULATE DEBUG - No additional level data, skipping additional level setup');
+        }
+        
+        // Set additional level info (read-only display) - FIXED: Handle both name and value
+        console.log('POPULATE DEBUG - Setting read-only display fields');
+        if (project.additional_level_name || project.additional_level_value) {
+            const displayName = project.additional_level_name || 'Additional Level';
+            const displayValue = project.additional_level_value || '';
+            
+            console.log('POPULATE DEBUG - Setting display name to:', displayName);
+            console.log('POPULATE DEBUG - Setting display value to:', displayValue);
+            
+            const nameDisplayElement = document.getElementById('edit-modal-level-name-display');
+            const valueDisplayElement = document.getElementById('edit-modal-level-value-display');
+            
+            if (nameDisplayElement) {
+                nameDisplayElement.value = displayName;
+                console.log('POPULATE DEBUG - Name display element set successfully');
+            } else {
+                console.log('POPULATE DEBUG - Name display element NOT found');
+            }
+            
+            if (valueDisplayElement) {
+                valueDisplayElement.value = displayValue;
+                console.log('POPULATE DEBUG - Value display element set successfully');
+            } else {
+                console.log('POPULATE DEBUG - Value display element NOT found');
+            }
+        } else {
+            console.log('POPULATE DEBUG - No additional level data for display fields');
+            const nameDisplayElement = document.getElementById('edit-modal-level-name-display');
+            const valueDisplayElement = document.getElementById('edit-modal-level-value-display');
+            
+            if (nameDisplayElement) nameDisplayElement.value = '';
+            if (valueDisplayElement) valueDisplayElement.value = '';
         }
         
         // Try to get descriptions asynchronously (don't block if they fail)
@@ -5025,8 +5178,18 @@ async function handleEditModalConfirmSubmit() {
             const sectionCode = project.section_code;
             const detailedSectionCode = project.detailed_section_code;
             const itemCode = project.item_code;
-            const levelName = project.additional_level_name || null;
-            const levelValue = project.additional_level_value || null;
+            
+            // FIXED: Read additional level values from the edit modal DOM elements
+            const levelNameElement = document.getElementById('edit-modal-level-name');
+            const levelValueElement = document.getElementById('edit-modal-level-value');
+            
+            const levelName = levelNameElement ? levelNameElement.value.trim() || null : null;
+            const levelValue = levelValueElement ? levelValueElement.value.trim() || null : null;
+            
+            console.log('SUBMIT DEBUG - Additional level data from DOM:');
+            console.log('- levelName:', levelName);
+            console.log('- levelValue:', levelValue);
+            
             const projectName = document.getElementById('edit-project-name').value.trim();
 
             if (!projectName) {
@@ -6108,12 +6271,49 @@ async function setEditModalCSIValues(project) {
         document.getElementById('edit-modal-item').value = itemText;
         
         // Set additional level info
+        console.log('EDIT MODAL DEBUG - Project additional level data:');
+        console.log('- additional_level_name:', project.additional_level_name);
+        console.log('- additional_level_value:', project.additional_level_value);
+        console.log('- Full project object:', project);
+        
         if (project.additional_level_name) {
+            console.log('EDIT MODAL DEBUG - Setting level name to:', project.additional_level_name);
             document.getElementById('edit-modal-level-name').value = project.additional_level_name;
+            
+            console.log('EDIT MODAL DEBUG - Loading level values for CSI path:', {
+                division: project.division_code,
+                section: project.section_code,
+                detailed_section: project.detailed_section_code,
+                item: project.item_code
+            });
+            
             await loadEditModalLevelValues(project.division_code, project.section_code, project.detailed_section_code, project.item_code);
+            
             if (project.additional_level_value) {
-                document.getElementById('edit-modal-level-value').value = project.additional_level_value;
+                console.log('EDIT MODAL DEBUG - Setting level value to:', project.additional_level_value);
+                const levelValueElement = document.getElementById('edit-modal-level-value');
+                console.log('EDIT MODAL DEBUG - Level value element before setting:', levelValueElement);
+                console.log('EDIT MODAL DEBUG - Available options:', Array.from(levelValueElement.options).map(o => o.value));
+                
+                levelValueElement.value = project.additional_level_value;
+                
+                console.log('EDIT MODAL DEBUG - Level value element after setting:', levelValueElement.value);
+                
+                // If the value wasn't set, it might not exist in the options
+                if (levelValueElement.value !== project.additional_level_value) {
+                    console.log('EDIT MODAL DEBUG - Value not found in options, adding it manually');
+                    const option = document.createElement('option');
+                    option.value = project.additional_level_value;
+                    option.textContent = project.additional_level_value;
+                    levelValueElement.appendChild(option);
+                    levelValueElement.value = project.additional_level_value;
+                    console.log('EDIT MODAL DEBUG - Added and set value:', levelValueElement.value);
+                }
+            } else {
+                console.log('EDIT MODAL DEBUG - No additional_level_value to set');
             }
+        } else {
+            console.log('EDIT MODAL DEBUG - No additional_level_name, skipping additional level setup');
         }
         
     } catch (error) {
@@ -6199,24 +6399,36 @@ async function loadEditModalItems(divisionCode, sectionCode, detailedSectionCode
 // Helper function to load additional level values for edit modal
 async function loadEditModalLevelValues(divisionCode, sectionCode, detailedSectionCode, itemCode) {
     try {
+        console.log('LOAD VALUES DEBUG - Loading additional level values for:', {
+            divisionCode, sectionCode, detailedSectionCode, itemCode
+        });
+        
         const { data: values, error } = await supabase.rpc('get_additional_level_values', {
             division_code_param: divisionCode,
             section_code_param: sectionCode,
             detailed_section_code_param: detailedSectionCode,
             item_code_param: itemCode
         });
+        
+        console.log('LOAD VALUES DEBUG - RPC response:', { values, error });
+        
         if (error) throw error;
         
         const valueSelect = document.getElementById('edit-modal-level-value');
         valueSelect.innerHTML = '<option value="">Select value</option>';
         
         if (values && values.length > 0) {
+            console.log('LOAD VALUES DEBUG - Processing values:', values);
             values.forEach(value => {
+                console.log('LOAD VALUES DEBUG - Adding option:', value);
                 const option = document.createElement('option');
                 option.value = value.level_value;
                 option.textContent = value.level_value;
                 valueSelect.appendChild(option);
             });
+            console.log('LOAD VALUES DEBUG - All options added to dropdown');
+        } else {
+            console.log('LOAD VALUES DEBUG - No values found or empty response');
         }
         
     } catch (error) {
