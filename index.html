@@ -135,6 +135,71 @@ Modified RPC calls in functions:
             overflow-y: auto;
             width: 90%;
         }
+        
+        /* NEW: Deprecation styling for standard values */
+        .deprecated-value {
+            background-color: #FEF3C7 !important;
+            border: 1px solid #F59E0B !important;
+            position: relative;
+        }
+        
+        .deprecated-value .attribute-value-name-input {
+            background-color: #FFFBEB;
+            border-color: #F59E0B;
+        }
+        
+        .deprecated-value::before {
+            content: "⚠️ DEPRECATED";
+            position: absolute;
+            top: -8px;
+            left: 8px;
+            background: #F59E0B;
+            color: white;
+            padding: 2px 6px;
+            font-size: 10px;
+            border-radius: 3px;
+            font-weight: bold;
+            z-index: 10;
+        }
+        
+        .usage-count {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            background: #E5E7EB;
+            color: #374151;
+            white-space: nowrap;
+        }
+        
+        .usage-count.high-usage {
+            background: #FEE2E2;
+            color: #DC2626;
+            font-weight: bold;
+        }
+        
+        .usage-count.medium-usage {
+            background: #FEF3C7;
+            color: #D97706;
+            font-weight: medium;
+        }
+        
+        .value-status-select {
+            min-width: 80px;
+        }
+        
+        .deprecated-warning {
+            background: #FEF3C7;
+            border: 1px solid #F59E0B;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 8px 0;
+        }
+        
+        .deprecated-warning::before {
+            content: "⚠️";
+            font-size: 16px;
+            margin-right: 8px;
+        }
     </style>
 </head>
 
@@ -338,6 +403,13 @@ Modified RPC calls in functions:
             class="attribute-value-unit-select w-32 px-3 py-2 text-base border-gray-300 rounded-md shadow-sm">
             <option value="">UOM</option>
         </select>
+        <!-- NEW: Status dropdown -->
+        <select class="value-status-select w-20 px-2 py-2 text-xs border-gray-300 rounded-md shadow-sm" onchange="handleStatusChange(this)">
+            <option value="active">Active</option>
+            <option value="deprecated">Deprecated</option>
+        </select>
+        <!-- NEW: Usage count display -->
+        <span class="usage-count text-xs text-gray-600 px-2 py-1 rounded" title="Number of approved items using this value">Used: 0</span>
         <button
             class="remove-value-btn px-2 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm hidden"
             onclick="removeStandardValue(this)">Remove</button>
@@ -348,6 +420,19 @@ Modified RPC calls in functions:
                             class="mt-2 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">
                             Add Value
                         </button>
+                        
+                        <!-- NEW: Deprecation Management Section -->
+                        <div class="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg" id="deprecation-info" style="display: none;">
+                            <h4 class="text-sm font-medium text-orange-800 mb-2">⚠️ Standard Value Management</h4>
+                            <div class="text-xs text-orange-700 space-y-1">
+                                <div>• <strong>Active:</strong> Available for new item creation</div>
+                                <div>• <strong>Deprecated:</strong> Hidden from new items but preserved in existing items</div>
+                                <div>• <strong>Usage Count:</strong> Number of approved items currently using this value</div>
+                            </div>
+                            <div class="mt-2 text-xs text-orange-600">
+                                <strong>Note:</strong> Deprecating a value will not affect existing approved items but will prevent its use in new item codes.
+                            </div>
+                        </div>
                     </div>
                     <div class="space-y-3">
     <div class="flex items-center">
@@ -618,10 +703,10 @@ Modified RPC calls in functions:
                                     <div id="no-project-bar" class="bg-gray-400 transition-all duration-500" style="width: 0%"></div>
                                 </div>
                                 <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                    <span>ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  Approved</span>
-                                    <span>ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  Pending</span>
-                                    <span>ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  Draft</span>
-                                    <span>ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  No Projects</span>
+                                    <span>ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  Approved</span>
+                                    <span>ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  Pending</span>
+                                    <span>ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  Draft</span>
+                                    <span>ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  No Projects</span>
                                 </div>
                             </div>
                         </div>
@@ -1392,6 +1477,174 @@ function toggleEditStandardValuesSection() {
             }
 
             updateRemoveButtons();
+        }
+
+        // NEW: Handle status change for standard values
+        function handleStatusChange(selectElement) {
+            const row = selectElement.closest('.standard-value-row');
+            const valueName = row.querySelector('.attribute-value-name-input').value.trim();
+            const status = selectElement.value;
+            
+            if (status === 'deprecated') {
+                // Add deprecated styling
+                row.classList.add('deprecated-value');
+                
+                // Show deprecation info section
+                const deprecationInfo = document.getElementById('deprecation-info');
+                if (deprecationInfo) {
+                    deprecationInfo.style.display = 'block';
+                }
+                
+                // Show confirmation for new deprecation
+                if (valueName) {
+                    const confirmMessage = `Mark "${valueName}" as deprecated?\n\nThis will:\n• Hide it from new item creation\n• Preserve existing items using this value\n• Allow reactivation later if needed`;
+                    
+                    if (!confirm(confirmMessage)) {
+                        // Revert to active
+                        selectElement.value = 'active';
+                        row.classList.remove('deprecated-value');
+                        return;
+                    }
+                    
+                    showMessageBox(`"${valueName}" marked as deprecated. It will be hidden from new item creation but preserved in existing items.`, false);
+                }
+            } else {
+                // Remove deprecated styling
+                row.classList.remove('deprecated-value');
+                
+                if (valueName) {
+                    showMessageBox(`"${valueName}" reactivated and available for new item creation.`, false);
+                }
+            }
+            
+            // Update usage count styling
+            updateUsageCountDisplay(row);
+        }
+
+        // NEW: Update usage count display based on status
+        function updateUsageCountDisplay(row) {
+            const usageSpan = row.querySelector('.usage-count');
+            const status = row.querySelector('.value-status-select').value;
+            const usageCount = parseInt(usageSpan.textContent.replace('Used: ', '')) || 0;
+            
+            // Reset classes
+            usageSpan.className = 'usage-count text-xs px-2 py-1 rounded';
+            
+            if (status === 'deprecated') {
+                usageSpan.classList.add('text-orange-600');
+                usageSpan.title = 'This deprecated value is used in ' + usageCount + ' approved items';
+            } else {
+                usageSpan.classList.add('text-gray-600');
+                usageSpan.title = 'Number of approved items using this value';
+            }
+            
+            if (usageCount > 20) {
+                usageSpan.classList.add('high-usage');
+            } else if (usageCount > 5) {
+                usageSpan.classList.add('medium-usage');
+            }
+        }
+
+        // NEW: Load usage counts for standard values (for existing projects)
+        async function loadStandardValueUsageCounts(projectId, attributeId) {
+            try {
+                const { data: usageData, error } = await supabase
+                    .rpc('get_standard_value_usage', {
+                        project_id_param: projectId,
+                        attribute_id_param: attributeId
+                    });
+                
+                if (error) {
+                    console.error('Error loading usage counts:', error);
+                    return;
+                }
+                
+                // Update usage displays in the modal
+                usageData.forEach(usage => {
+                    const rows = document.querySelectorAll('.standard-value-row');
+                    rows.forEach(row => {
+                        const nameInput = row.querySelector('.attribute-value-name-input');
+                        if (nameInput && nameInput.value === usage.value_name) {
+                            const usageSpan = row.querySelector('.usage-count');
+                            if (usageSpan) {
+                                usageSpan.textContent = `Used: ${usage.usage_count}`;
+                                
+                                // Set status
+                                const statusSelect = row.querySelector('.value-status-select');
+                                if (statusSelect) {
+                                    statusSelect.value = usage.status;
+                                    if (usage.status === 'deprecated') {
+                                        row.classList.add('deprecated-value');
+                                    }
+                                }
+                                
+                                updateUsageCountDisplay(row);
+                            }
+                        }
+                    });
+                });
+                
+            } catch (error) {
+                console.error('Error loading usage counts:', error);
+            }
+        }
+
+        // NEW: Safe deprecation function for existing projects
+        async function deprecateStandardValueSafely(projectId, attributeId, valueName, reason = null) {
+            try {
+                // First check usage impact
+                const { data: usageCheck, error: usageError } = await supabase
+                    .rpc('check_standard_value_usage', {
+                        project_id_param: projectId,
+                        attribute_id_param: attributeId,
+                        value_name_param: valueName
+                    });
+                
+                if (usageError) throw usageError;
+                
+                // Show impact analysis
+                const impactMessage = `
+                    DEPRECATE STANDARD VALUE: "${valueName}"
+                    
+                    Impact Analysis:
+                    • Currently used in: ${usageCheck.usage_count} approved items
+                    • Pending requests: ${usageCheck.pending_requests}
+                    • Impact level: ${usageCheck.impact_level.toUpperCase()}
+                    
+                    ${usageCheck.affected_codes && usageCheck.affected_codes.length > 0 ? 
+                        `First ${Math.min(5, usageCheck.affected_codes.length)} affected items: ${usageCheck.affected_codes.slice(0, 5).join(', ')}` : ''}
+                    
+                    Effects:
+                    ✓ Existing items remain unchanged
+                    ✓ Duplicate detection preserved  
+                    ✓ Search functionality maintained
+                    ✗ New items cannot select this value
+                    
+                    Continue with deprecation?
+                `;
+                
+                if (!confirm(impactMessage)) return false;
+                
+                // Perform deprecation
+                const { data: result, error: deprecationError } = await supabase
+                    .rpc('deprecate_standard_value', {
+                        project_id_param: projectId,
+                        attribute_id_param: attributeId,
+                        value_name_param: valueName,
+                        reason_param: reason,
+                        deprecated_by_param: currentUser.id
+                    });
+                
+                if (deprecationError) throw deprecationError;
+                
+                showMessageBox(`Standard value "${valueName}" deprecated successfully. System integrity maintained.`, false);
+                return true;
+                
+            } catch (error) {
+                console.error('Deprecation error:', error);
+                showMessageBox('Deprecation failed: ' + error.message, true);
+                return false;
+            }
         }
 
         function updateRemoveButtons() {
@@ -2536,12 +2789,21 @@ async function validateAndEnableAttributeCreation() {
     if (!isManualEntry) {
         const valueNameInputs = attributeStandardValuesContainer.querySelectorAll('.attribute-value-name-input');
         const valueUnitSelects = attributeStandardValuesContainer.querySelectorAll('.attribute-value-unit-select');
+        const valueStatusSelects = attributeStandardValuesContainer.querySelectorAll('.value-status-select');
 
         for (let i = 0; i < valueNameInputs.length; i++) {
             const name = valueNameInputs[i].value.trim();
             const unit = valueUnitSelects[i].value.trim();
+            const status = valueStatusSelects[i].value || 'active';
+            
             if (name) {
-                standardValues.push({ name: name, unit: unit });
+                standardValues.push({ 
+                    name: name, 
+                    unit: unit,
+                    status: status,
+                    created_at: new Date().toISOString(),
+                    usage_count: 0
+                });
             }
         }
 
@@ -2593,6 +2855,11 @@ async function validateAndEnableAttributeCreation() {
             <select class="attribute-value-unit-select w-32 px-3 py-2 text-base border-gray-300 rounded-md shadow-sm">
                 <option value="">UOM</option>
             </select>
+            <select class="value-status-select w-20 px-2 py-2 text-xs border-gray-300 rounded-md shadow-sm" onchange="handleStatusChange(this)">
+                <option value="active">Active</option>
+                <option value="deprecated">Deprecated</option>
+            </select>
+            <span class="usage-count text-xs text-gray-600 px-2 py-1 rounded" title="Number of approved items using this value">Used: 0</span>
             <button class="remove-value-btn px-2 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm hidden" onclick="removeStandardValue(this)">Remove</button>
         </div>
     `;
@@ -2693,7 +2960,7 @@ function updateCollectedDataDisplay() {
             <div class="mb-6 p-4 border border-gray-200 rounded-lg bg-white">
                 <div class="mb-3">
                     <h5 class="font-medium text-gray-900">CSI Path:</h5>
-                    <p class="text-sm text-gray-600">${entry.division} ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ ${entry.section} ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ ${entry.subsection} ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ ${entry.item}</p>
+                    <p class="text-sm text-gray-600">${entry.division} ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ ${entry.section} ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ ${entry.subsection} ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ ${entry.item}</p>
                    ${entry.additionalLevel ? `<p class="text-sm text-gray-600">Additional Level: ${entry.additionalLevel.name} > ${entry.additionalLevel.value}</p>` : ''}
                 </div>
                 <div class="space-y-2">
@@ -4427,6 +4694,40 @@ function displayEditModalAttributes(attributes) {
     attributes.forEach((attr, index) => {
         const attrDiv = document.createElement('div');
         attrDiv.className = 'p-3 bg-white border border-gray-200 rounded-md';
+        
+        // Enhanced display with deprecation information
+        let valuesDisplay = '';
+        let deprecatedCount = 0;
+        let activeCount = 0;
+        
+        if (attr.is_manual_entry) {
+            valuesDisplay = '<span class="text-blue-600 font-semibold">[Manual Entry Field]</span> - Users input values freely';
+        } else if (attr.standard_values && attr.standard_values.length > 0) {
+            // Separate active and deprecated values
+            const activeValues = attr.standard_values.filter(v => v.status !== 'deprecated');
+            const deprecatedValues = attr.standard_values.filter(v => v.status === 'deprecated');
+            
+            activeCount = activeValues.length;
+            deprecatedCount = deprecatedValues.length;
+            
+            // Display active values
+            if (activeValues.length > 0) {
+                valuesDisplay = `<span class="text-green-700 font-medium">Active (${activeCount}):</span> ${activeValues.map(v => v.unit ? `${v.name} (${v.unit})` : v.name).join(', ')}`;
+            }
+            
+            // Display deprecated values if any
+            if (deprecatedValues.length > 0) {
+                if (activeValues.length > 0) valuesDisplay += '<br>';
+                valuesDisplay += `<span class="text-orange-600 font-medium">⚠️ Deprecated (${deprecatedCount}):</span> <span class="text-orange-700">${deprecatedValues.map(v => v.unit ? `${v.name} (${v.unit})` : v.name).join(', ')}</span>`;
+            }
+            
+            if (activeValues.length === 0 && deprecatedValues.length > 0) {
+                valuesDisplay = `<span class="text-red-600 font-bold">⚠️ All values deprecated!</span><br>${valuesDisplay}`;
+            }
+        } else {
+            valuesDisplay = '<span class="text-gray-500 italic">No standard values defined</span>';
+        }
+        
         attrDiv.innerHTML = `
             <div class="flex justify-between items-start">
                 <div class="flex-1">
@@ -4434,21 +4735,32 @@ function displayEditModalAttributes(attributes) {
                         <div class="font-medium">${attr.attribute_name}</div>
                         ${attr.is_mandatory ? '<span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">Mandatory</span>' : ''}
                         ${attr.is_manual_entry ? '<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Manual Entry</span>' : ''}
+                        ${deprecatedCount > 0 ? '<span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">Has Deprecated</span>' : ''}
                     </div>
                     <div class="text-sm text-gray-600 mt-1">
-                        ${attr.is_manual_entry ? 
-                            '<span class="text-blue-600 font-semibold">[Manual Entry Field]</span> - Users input values freely' : 
-                            `Values: ${attr.standard_values.map(v => v.unit ? `${v.name} (${v.unit})` : v.name).join(', ')}`
-                        }
+                        ${valuesDisplay}
                     </div>
+                    ${deprecatedCount > 0 && !attr.is_manual_entry ? `
+                        <div class="mt-2 p-2 bg-orange-50 border border-orange-200 rounded text-xs text-orange-700">
+                            <div class="font-medium">⚠️ Deprecation Notice:</div>
+                            <div>This attribute has ${deprecatedCount} deprecated value${deprecatedCount > 1 ? 's' : ''}. These values are hidden from new item creation but preserved in existing items.</div>
+                        </div>
+                    ` : ''}
                 </div>
                 <div class="flex space-x-2 ml-2">
-                    <button onclick="editProjectAttribute(${index})" class="text-blue-600 hover:text-blue-800">
+                    <button onclick="editProjectAttribute(${index})" class="text-blue-600 hover:text-blue-800" title="Edit attribute">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
                         </svg>
                     </button>
-                    <button onclick="removeProjectAttribute(${index})" class="text-red-600 hover:text-red-800">
+                    ${deprecatedCount > 0 && !attr.is_manual_entry ? `
+                        <button onclick="manageAttributeDeprecation(${index})" class="text-orange-600 hover:text-orange-800" title="Manage deprecated values">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                            </svg>
+                        </button>
+                    ` : ''}
+                    <button onclick="removeProjectAttribute(${index})" class="text-red-600 hover:text-red-800" title="Remove attribute">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
                         </svg>
@@ -4458,6 +4770,214 @@ function displayEditModalAttributes(attributes) {
         `;
         container.appendChild(attrDiv);
     });
+}
+
+// NEW: Manage attribute deprecation for existing projects
+async function manageAttributeDeprecation(attributeIndex) {
+    const attr = editingProjectData.attributes[attributeIndex];
+    const project = editingProjectData.project;
+    
+    if (!attr || !project) {
+        showMessageBox('Error: Could not load attribute or project data.', true);
+        return;
+    }
+    
+    // Create deprecation management modal content
+    const modalContent = `
+        <div class="max-w-4xl mx-auto p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">
+                Manage Standard Values: ${attr.attribute_name}
+            </h3>
+            
+            <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
+                <div class="text-sm text-blue-800">
+                    <div><strong>Project:</strong> ${project.project_name}</div>
+                    <div><strong>Attribute ID:</strong> ${attr.id}</div>
+                </div>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="max-h-80 overflow-y-auto">
+                    <table class="w-full border-collapse border border-gray-300">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="border border-gray-300 px-3 py-2 text-left">Value Name</th>
+                                <th class="border border-gray-300 px-3 py-2 text-left">Unit</th>
+                                <th class="border border-gray-300 px-3 py-2 text-left">Status</th>
+                                <th class="border border-gray-300 px-3 py-2 text-left">Usage</th>
+                                <th class="border border-gray-300 px-3 py-2 text-left">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="deprecation-management-table">
+                            <tr><td colspan="5" class="text-center p-4">Loading usage data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4 border-t">
+                    <button onclick="closeDeprecationModal()" 
+                            class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Show modal
+    showCustomModal('Manage Standard Values', modalContent);
+    
+    // Load usage data
+    await loadDeprecationManagementData(project.id, attr.id, attr.standard_values);
+}
+
+async function loadDeprecationManagementData(projectId, attributeId, standardValues) {
+    try {
+        // Get usage data from database
+        const { data: usageData, error } = await supabase
+            .rpc('get_standard_value_usage', {
+                project_id_param: projectId,
+                attribute_id_param: attributeId
+            });
+        
+        if (error) throw error;
+        
+        const tableBody = document.getElementById('deprecation-management-table');
+        if (!tableBody) return;
+        
+        tableBody.innerHTML = '';
+        
+        if (!standardValues || standardValues.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-gray-500">No standard values defined</td></tr>';
+            return;
+        }
+        
+        standardValues.forEach(value => {
+            const usage = usageData.find(u => u.value_name === value.name) || { usage_count: 0, status: value.status || 'active' };
+            const isDeprecated = usage.status === 'deprecated';
+            
+            const row = document.createElement('tr');
+            row.className = isDeprecated ? 'bg-orange-50' : '';
+            
+            row.innerHTML = `
+                <td class="border border-gray-300 px-3 py-2">
+                    ${value.name}
+                    ${isDeprecated ? '<span class="text-orange-600 text-xs ml-2">⚠️</span>' : ''}
+                </td>
+                <td class="border border-gray-300 px-3 py-2">${value.unit || '-'}</td>
+                <td class="border border-gray-300 px-3 py-2">
+                    <span class="px-2 py-1 text-xs rounded ${isDeprecated ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'}">
+                        ${usage.status.charAt(0).toUpperCase() + usage.status.slice(1)}
+                    </span>
+                </td>
+                <td class="border border-gray-300 px-3 py-2">
+                    <span class="font-mono text-sm">${usage.usage_count}</span>
+                    ${usage.usage_count > 0 ? '<span class="text-xs text-gray-500 ml-1">items</span>' : ''}
+                </td>
+                <td class="border border-gray-300 px-3 py-2">
+                    ${isDeprecated ? `
+                        <button onclick="reactivateStandardValue(${projectId}, ${attributeId}, '${value.name}')"
+                                class="text-green-600 hover:text-green-800 text-sm px-2 py-1 border border-green-300 rounded hover:bg-green-50">
+                            Reactivate
+                        </button>
+                    ` : `
+                        <button onclick="deprecateStandardValueFromModal(${projectId}, ${attributeId}, '${value.name}')"
+                                class="text-orange-600 hover:text-orange-800 text-sm px-2 py-1 border border-orange-300 rounded hover:bg-orange-50">
+                            Deprecate
+                        </button>
+                    `}
+                </td>
+            `;
+            
+            tableBody.appendChild(row);
+        });
+        
+    } catch (error) {
+        console.error('Error loading deprecation data:', error);
+        const tableBody = document.getElementById('deprecation-management-table');
+        if (tableBody) {
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-red-500">Error loading data: ' + error.message + '</td></tr>';
+        }
+    }
+}
+
+// Helper functions for deprecation modal
+function showCustomModal(title, content) {
+    // Create modal overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'custom-modal-overlay';
+    overlay.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50';
+    overlay.innerHTML = `
+        <div class="relative min-h-screen flex items-center justify-center p-4">
+            <div class="relative bg-white rounded-lg shadow-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
+                    <h3 class="text-lg font-medium text-gray-900">${title}</h3>
+                    <button onclick="closeDeprecationModal()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="p-6">
+                    ${content}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+}
+
+function closeDeprecationModal() {
+    const modal = document.getElementById('custom-modal-overlay');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+async function deprecateStandardValueFromModal(projectId, attributeId, valueName) {
+    const reason = prompt(`Enter reason for deprecating "${valueName}" (optional):`);
+    const success = await deprecateStandardValueSafely(projectId, attributeId, valueName, reason);
+    
+    if (success) {
+        // Reload the deprecation management data
+        const attr = editingProjectData.attributes.find(a => a.id === attributeId);
+        if (attr) {
+            await loadDeprecationManagementData(projectId, attributeId, attr.standard_values);
+        }
+        
+        // Refresh the main edit modal display
+        displayEditModalAttributes(editingProjectData.attributes);
+    }
+}
+
+async function reactivateStandardValue(projectId, attributeId, valueName) {
+    try {
+        const { data: result, error } = await supabase
+            .rpc('reactivate_standard_value', {
+                project_id_param: projectId,
+                attribute_id_param: attributeId,
+                value_name_param: valueName,
+                reactivated_by_param: currentUser.id
+            });
+        
+        if (error) throw error;
+        
+        showMessageBox(`Standard value "${valueName}" reactivated successfully.`, false);
+        
+        // Reload the deprecation management data
+        const attr = editingProjectData.attributes.find(a => a.id === attributeId);
+        if (attr) {
+            await loadDeprecationManagementData(projectId, attributeId, attr.standard_values);
+        }
+        
+        // Refresh the main edit modal display
+        displayEditModalAttributes(editingProjectData.attributes);
+        
+    } catch (error) {
+        console.error('Reactivation error:', error);
+        showMessageBox('Reactivation failed: ' + error.message, true);
+    }
 }
 function editProjectAttribute(index) {
     const attr = editingProjectData.attributes[index];
@@ -5630,7 +6150,7 @@ function updateCSIChangesDisplay() {
         
         for (const [projectId, changes] of csiPendingChanges) {
             const originalProject = csiProjectsData.find(p => p.id === projectId);
-            changesHTML += `<div class="mt-1">ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ <strong>${originalProject.project_name}</strong>: CSI path modifications</div>`;
+            changesHTML += `<div class="mt-1">ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ <strong>${originalProject.project_name}</strong>: CSI path modifications</div>`;
         }
         
         changesList.innerHTML = changesHTML;
@@ -6953,11 +7473,25 @@ addAttributeValueBtn.addEventListener('click', (e) => {
         <select class="attribute-value-unit-select w-32 px-3 py-2 text-base border-gray-300 rounded-md shadow-sm">
             <option value="">UOM</option>
         </select>
+        <select class="value-status-select w-20 px-2 py-2 text-xs border-gray-300 rounded-md shadow-sm" onchange="handleStatusChange(this)">
+            <option value="active">Active</option>
+            <option value="deprecated">Deprecated</option>
+        </select>
+        <span class="usage-count text-xs text-gray-600 px-2 py-1 rounded" title="Number of approved items using this value">Used: 0</span>
         <button class="remove-value-btn px-2 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm" onclick="removeStandardValue(this)">Remove</button>
     `;
     attributeStandardValuesContainer.appendChild(newRow);
     updateUOMSelects();
     updateRemoveButtons();
+    
+    // Show deprecation info if this is the first value being added
+    const rows = attributeStandardValuesContainer.querySelectorAll('.standard-value-row');
+    if (rows.length >= 2) { // Show info after second value is added
+        const deprecationInfo = document.getElementById('deprecation-info');
+        if (deprecationInfo) {
+            deprecationInfo.style.display = 'block';
+        }
+    }
 });     
 // Edit modal value management
 addEditValueBtn.addEventListener('click', () => {
@@ -8206,7 +8740,7 @@ function updateChangesSummary() {
         const changeList = Object.keys(changes).map(key => {
             const oldValue = project[key] || '';
             const newValue = changes[key];
-            return `${key.replace(/_/g, ' ')}: "${oldValue}" ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ "${newValue}"`;
+            return `${key.replace(/_/g, ' ')}: "${oldValue}" ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ "${newValue}"`;
         }).join(', ');
         
         html += `<div class="mb-1"><strong>${project.project_name}:</strong> ${changeList}</div>`;
@@ -8500,6 +9034,36 @@ window.debugSystem = debugSystem;
 window.changeUserRole = changeUserRole;
 window.toggleUserStatus = toggleUserStatus;
 window.openViewProjectModal = openViewProjectModal;
+
+// NEW: Make deprecation functions globally available
+window.handleStatusChange = handleStatusChange;
+window.manageAttributeDeprecation = manageAttributeDeprecation;
+window.deprecateStandardValueSafely = deprecateStandardValueSafely;
+window.loadStandardValueUsageCounts = loadStandardValueUsageCounts;
+window.showCustomModal = showCustomModal;
+window.closeDeprecationModal = closeDeprecationModal;
+window.deprecateStandardValueFromModal = deprecateStandardValueFromModal;
+window.reactivateStandardValue = reactivateStandardValue;
+
+// Initialize deprecation system on page load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 CSI Attributes Portal with Standard Values Deprecation System initialized');
+    
+    // Show deprecation info initially if there are multiple values
+    const container = document.getElementById('attribute-standard-values-container');
+    if (container) {
+        const observer = new MutationObserver(function(mutations) {
+            const rows = container.querySelectorAll('.standard-value-row');
+            const deprecationInfo = document.getElementById('deprecation-info');
+            
+            if (rows.length >= 2 && deprecationInfo) {
+                deprecationInfo.style.display = 'block';
+            }
+        });
+        
+        observer.observe(container, { childList: true });
+    }
+});
    
    
    </script>
