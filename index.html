@@ -1097,6 +1097,164 @@ var supabase = window.supabaseClient;
         }
 
         // Global state
+        // Session persistence and authentication
+        async function checkAuthentication() {
+            try {
+                const storedUser = localStorage.getItem('currentUser');
+                if (storedUser) {
+                    const userData = JSON.parse(storedUser);
+                    
+                    // Verify the user still exists and is valid in the database
+                    const { data: user, error } = await supabase
+                        .from('users')
+                        .select('*')
+                        .eq('id', userData.id)
+                        .eq('status', 'active')
+                        .single();
+                    
+                    if (!error && user) {
+                        currentUser = user;
+                        console.log('User restored from session:', currentUser);
+                        
+                        // Hide login modal and show main content
+                        const loginModal = document.getElementById('login-modal');
+                        if (loginModal) {
+                            hideModal(loginModal);
+                        }
+                        
+                        // Show logout button and user info
+                        const logoutBtn = document.getElementById('logout-btn');
+                        const userInfo = document.getElementById('user-info');
+                        if (logoutBtn) logoutBtn.style.display = 'block';
+                        if (userInfo) userInfo.style.display = 'block';
+                        
+                        // Initialize the portal with the authenticated user
+                        initializeApp();
+                        await initializePortal();
+                        return true;
+                    } else {
+                        // Invalid session, clear it
+                        localStorage.removeItem('currentUser');
+                        console.log('Invalid session cleared');
+                    }
+                }
+                
+                // No valid session, show login and hide user elements
+                const loginModal = document.getElementById('login-modal');
+                const logoutBtn = document.getElementById('logout-btn');
+                const userInfo = document.getElementById('user-info');
+                
+                if (loginModal) {
+                    showModal(loginModal);
+                }
+                if (logoutBtn) logoutBtn.style.display = 'none';
+                if (userInfo) userInfo.style.display = 'none';
+                
+                return false;
+                
+            } catch (error) {
+                console.error('Error checking authentication:', error);
+                localStorage.removeItem('currentUser');
+                
+                // Show login modal on error and hide user elements
+                const loginModal = document.getElementById('login-modal');
+                const logoutBtn = document.getElementById('logout-btn');
+                const userInfo = document.getElementById('user-info');
+                
+                if (loginModal) {
+                    showModal(loginModal);
+                }
+                if (logoutBtn) logoutBtn.style.display = 'none';
+                if (userInfo) userInfo.style.display = 'none';
+                
+                return false;
+            }
+        }
+
+        async function initializePortal() {
+            console.log('Initializing portal for user:', currentUser);
+            
+            // Load user projects if user is authenticated
+            if (currentUser && typeof loadUserProjects === 'function') {
+                try {
+                    await loadUserProjects();
+                } catch (error) {
+                    console.error('Error loading user projects:', error);
+                }
+            }
+            
+            // Initialize other portal features based on user role
+            if (currentUser) {
+                // Show appropriate UI elements based on role
+                updateUIForUserRole(currentUser.role);
+            }
+        }
+
+        function updateUIForUserRole(role) {
+            // Update UI elements based on user role
+            const adminElements = document.querySelectorAll('.admin-only');
+            const creatorElements = document.querySelectorAll('.creator-only');
+            const reviewerElements = document.querySelectorAll('.reviewer-only');
+            
+            adminElements.forEach(el => {
+                el.style.display = role === 'admin' ? 'block' : 'none';
+            });
+            
+            creatorElements.forEach(el => {
+                el.style.display = ['creator', 'admin'].includes(role) ? 'block' : 'none';
+            });
+            
+            reviewerElements.forEach(el => {
+                el.style.display = ['reviewer', 'admin'].includes(role) ? 'block' : 'none';
+            });
+        }
+
+        function logout() {
+            // Clear session data
+            localStorage.removeItem('currentUser');
+            sessionStorage.clear();
+            currentUser = null;
+            
+            // Clear any cached data
+            window.allUserProjects = null;
+            window.editingProjectData = null;
+            currentProject = null;
+            collectedData = [];
+            currentAdditionalLevel = null;
+            loadedDraftProject = null;
+            
+            // Reset UI elements
+            const userInfo = document.getElementById('user-info');
+            const logoutBtn = document.getElementById('logout-btn');
+            const debugBtn = document.getElementById('debug-btn');
+            
+            if (userInfo) {
+                userInfo.textContent = '';
+                userInfo.style.display = 'none';
+            }
+            if (logoutBtn) logoutBtn.style.display = 'none';
+            if (debugBtn) debugBtn.classList.add('hidden');
+            
+            // Hide admin/role-specific elements
+            const tabAdmin = document.getElementById('tab-admin');
+            const tabDashboard = document.getElementById('tab-dashboard');
+            const tabCSIManagement = document.getElementById('tab-csi-management');
+            const draftInfo = document.getElementById('draft-info');
+            
+            if (tabAdmin) tabAdmin.style.display = 'none';
+            if (tabDashboard) tabDashboard.style.display = 'none';
+            if (tabCSIManagement) tabCSIManagement.style.display = 'none';
+            if (draftInfo) draftInfo.style.display = 'none';
+            
+            // Show login modal
+            const loginModal = document.getElementById('login-modal');
+            if (loginModal) {
+                showModal(loginModal);
+            }
+            
+            console.log('User logged out successfully');
+        }
+
         let currentUser = null;
         let currentProject = null;
         let collectedData = [];
@@ -2179,8 +2337,23 @@ async function getItemDescription(itemCode) {
 
                 if (data && data.success) {
                     currentUser = data.user;
+                    
+                    // Store user in localStorage for session persistence
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    
                     hideModal(loginModal);
+                    
+                    // Show user elements
+                    const logoutBtn = document.getElementById('logout-btn');
+                    const userInfo = document.getElementById('user-info');
+                    if (logoutBtn) logoutBtn.style.display = 'block';
+                    if (userInfo) userInfo.style.display = 'block';
+                    
                     initializeApp();
+                    
+                    // Initialize portal after successful login
+                    await initializePortal();
+                    
                     showMessageBox('Login successful!');
                 } else {
                     throw new Error(data?.message || 'Login failed');
@@ -2193,25 +2366,7 @@ async function getItemDescription(itemCode) {
             }
         }
 
-        function logout() {
-            currentUser = null;
-            currentProject = null;
-            collectedData = [];
-            currentAdditionalLevel = null;
-            loadedDraftProject = null;
-
-            // Reset UI
-            document.getElementById('user-info').textContent = '';
-            tabAdmin.style.display = 'none';
-            const tabCSIManagement = document.getElementById('tab-csi-management');
-            if (tabCSIManagement) {
-                tabCSIManagement.style.display = 'none';
-            }
-            draftInfo.style.display = 'none';
-
-            // Show login modal
-            showModal(loginModal);
-        }
+        // Logout function is defined above with session handling
 
        function initializeApp() {
     // Update user info
@@ -5287,7 +5442,7 @@ async function saveEditedProject() {
         console.log('DEBUG - About to save these tags to database (collected from DOM):', tagsToSave);
         
         if (currentUser.role === 'admin') {
-            const result = await supabase.rpc('admin_update_project_safe', {
+            const result = await supabase.rpc('admin_update_project', {
                 project_id_param: project.id,
                 admin_id_param: currentUser.id,
                 project_name_param: projectName,
@@ -5307,7 +5462,7 @@ async function saveEditedProject() {
             data = result.data;
             error = result.error;
         } else {
-            const result = await supabase.rpc('update_project_safe', {
+            const result = await supabase.rpc('update_project', {
                 project_id_param: project.id,
                 user_id_param: currentUser.id,
                 project_name_param: projectName,
@@ -5894,7 +6049,7 @@ async function handleEditModalConfirmSubmit() {
             // Update project using appropriate function based on user role
             let data, error;
             if (currentUser.role === 'admin') {
-                const result = await supabase.rpc('admin_update_project_safe', {
+                const result = await supabase.rpc('admin_update_project', {
                     project_id_param: project.id,
                     admin_id_param: currentUser.id,
                     project_name_param: projectName,
@@ -5914,7 +6069,7 @@ async function handleEditModalConfirmSubmit() {
                 data = result.data;
                 error = result.error;
             } else {
-                const result = await supabase.rpc('update_project_safe', {
+                const result = await supabase.rpc('update_project', {
                     project_id_param: project.id,
                     user_id_param: currentUser.id,
                     project_name_param: projectName,
@@ -7970,13 +8125,16 @@ messageBoxOkBtn.addEventListener('click', () => {
 // Add event listener for edit modal manual entry checkbox  
 document.getElementById('edit-manual-entry-checkbox').addEventListener('change', toggleEditStandardValuesSection);
         // Check if user is already logged in (for development)
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
     console.log('DOM Content Loaded - Initializing...');
     
-    // Show login modal by default
-    const loginModal = document.getElementById('login-modal');
-    if (loginModal) {
-        showModal(loginModal);
+    // Check for existing authentication session
+    const isAuthenticated = await checkAuthentication();
+    
+    if (!isAuthenticated) {
+        console.log('No valid session found, showing login modal');
+    } else {
+        console.log('Valid session restored, portal initialized');
     }
 
     console.log('CSI Attribute Portal initialized');
