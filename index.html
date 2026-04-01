@@ -1013,6 +1013,9 @@ Modified RPC calls in functions:
                             <option value="admin">Admin</option>
                             <option value="creator">Creator</option>
                             <option value="reviewer">Reviewer</option>
+                            <option value="erp_data_entry">ERP Data Entry</option>
+                            <option value="site_team">Site Team</option>
+                            <option value="store_supervisor">Store Supervisor</option>
                         </select>
                     </div>
                     <div class="flex justify-end space-x-3">
@@ -6977,7 +6980,10 @@ function discardCSIChanges() {
                 const roleColor = {
                     'admin': 'bg-purple-100 text-purple-800',
                     'creator': 'bg-blue-100 text-blue-800',
-                    'reviewer': 'bg-orange-100 text-orange-800'
+                    'reviewer': 'bg-orange-100 text-orange-800',
+                    'erp_data_entry': 'bg-cyan-100 text-cyan-800',
+                    'site_team': 'bg-green-100 text-green-800',
+                    'store_supervisor': 'bg-teal-100 text-teal-800'
                 }[user.role] || 'bg-gray-100 text-gray-800';
 
                 html += `
@@ -6993,6 +6999,9 @@ function discardCSIChanges() {
                                     <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
                                     <option value="creator" ${user.role === 'creator' ? 'selected' : ''}>Creator</option>
                                     <option value="reviewer" ${user.role === 'reviewer' ? 'selected' : ''}>Reviewer</option>
+                                    <option value="erp_data_entry" ${user.role === 'erp_data_entry' ? 'selected' : ''}>ERP Data Entry</option>
+                                    <option value="site_team" ${user.role === 'site_team' ? 'selected' : ''}>Site Team</option>
+                                    <option value="store_supervisor" ${user.role === 'store_supervisor' ? 'selected' : ''}>Store Supervisor</option>
                                 </select>
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColor}">
                                     ${user.status.toUpperCase()}
