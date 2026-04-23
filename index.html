@@ -1653,6 +1653,11 @@ function toggleStandardValuesSection() {
                 <select class="attribute-value-unit-select w-32 px-3 py-2 text-base border-gray-300 rounded-md shadow-sm">
                     <option value="">UOM</option>
                 </select>
+                <select class="value-status-select w-20 px-2 py-2 text-xs border-gray-300 rounded-md shadow-sm" onchange="handleStatusChange(this)">
+                    <option value="active">Active</option>
+                    <option value="deprecated">Deprecated</option>
+                </select>
+                <span class="usage-count text-xs text-gray-600 px-2 py-1 rounded" title="Number of approved items using this value">Used: 0</span>
                 <button class="remove-value-btn px-2 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm hidden" onclick="removeStandardValue(this)">Remove</button>
             </div>
         `;
@@ -8418,6 +8423,11 @@ document.getElementById('manual-entry-checkbox').addEventListener('change', func
                 <select class="attribute-value-unit-select w-32 px-3 py-2 text-base border-gray-300 rounded-md shadow-sm">
                     <option value="">UOM</option>
                 </select>
+                <select class="value-status-select w-20 px-2 py-2 text-xs border-gray-300 rounded-md shadow-sm" onchange="handleStatusChange(this)">
+                    <option value="active">Active</option>
+                    <option value="deprecated">Deprecated</option>
+                </select>
+                <span class="usage-count text-xs text-gray-600 px-2 py-1 rounded" title="Number of approved items using this value">Used: 0</span>
                 <button class="remove-value-btn px-2 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm hidden" onclick="removeStandardValue(this)">Remove</button>
             </div>
         `;
