@@ -458,6 +458,14 @@ Modified RPC calls in functions:
             <span class="text-xs text-gray-500">(Users will input values freely instead of selecting from predefined options)</span>
         </div>
     </div>
+    <div class="flex items-center">
+        <input type="checkbox" id="size-attribute-checkbox"
+            class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded">
+        <label for="size-attribute-checkbox" class="ml-2 block text-sm text-gray-900">📏 Size Attribute</label>
+        <div class="ml-2">
+            <span class="text-xs text-gray-500">(Values will be combined with " x " to create size field, e.g., Length x Width x Height)</span>
+        </div>
+    </div>
 </div>
                     <button id="add-attribute-btn"
                         class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
@@ -937,6 +945,11 @@ Modified RPC calls in functions:
         <input type="checkbox" id="edit-manual-entry-checkbox"
             class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
         <label for="edit-manual-entry-checkbox" class="ml-2 block text-sm text-gray-900">Manual Entry Attribute</label>
+    </div>
+    <div class="flex items-center">
+        <input type="checkbox" id="edit-size-attribute-checkbox"
+            class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded">
+        <label for="edit-size-attribute-checkbox" class="ml-2 block text-sm text-gray-900">📏 Size Attribute</label>
     </div>
 </div>
                 <div class="flex justify-end space-x-3">
@@ -2343,6 +2356,7 @@ function saveEditedAttribute() {
     const nameInput = document.getElementById('edit-attr-name');
     const mandatoryInput = document.getElementById('edit-attr-mandatory');
     const manualInput = document.getElementById('edit-attr-manual');
+    const sizeInput = document.getElementById('edit-size-attribute-checkbox');
     
     if (!nameInput) {
         showMessageBox('Could not find form inputs.', true);
@@ -2352,6 +2366,7 @@ function saveEditedAttribute() {
     const name = nameInput.value.trim();
     const isMandatory = mandatoryInput ? mandatoryInput.checked : false;
     const isManualEntry = manualInput ? manualInput.checked : false;
+    const isSizeAttribute = sizeInput ? sizeInput.checked : false;
     
     if (!name) {
         showMessageBox('Attribute name is required.', true);
@@ -2380,6 +2395,7 @@ function saveEditedAttribute() {
     attribute.name = name;
     attribute.mandatory = isMandatory;
     attribute.isManualEntry = isManualEntry;
+    attribute.isSizeAttribute = isSizeAttribute;
     attribute.standardValues = standardValues;
     
     // Clear editing state
@@ -3288,6 +3304,7 @@ async function validateAndEnableAttributeCreation() {
     const attrName = attributeNameInput.value.trim();
     const mandatory = mandatoryCheckbox.checked;
     const isManualEntry = document.getElementById('manual-entry-checkbox').checked;
+    const isSizeAttribute = document.getElementById('size-attribute-checkbox').checked;
 
     if (!division || !section || !subsection || !item) {
         showMessageBox("Please select a complete CSI hierarchy path.", true);
@@ -3363,13 +3380,15 @@ async function validateAndEnableAttributeCreation() {
         name: attrName,
         standardValues: standardValues,
         mandatory: mandatory,
-        isManualEntry: isManualEntry
+        isManualEntry: isManualEntry,
+        isSizeAttribute: isSizeAttribute
     });
 
     // Reset form
     attributeNameInput.value = '';
     mandatoryCheckbox.checked = false;
     document.getElementById('manual-entry-checkbox').checked = false;
+    document.getElementById('size-attribute-checkbox').checked = false;
 
     // Reset standard values section
     attributeStandardValuesContainer.innerHTML = `
@@ -3504,6 +3523,7 @@ function updateCollectedDataDisplay() {
                                 <span class="font-medium">${attr.name}</span>
                                 ${attr.mandatory ? '<span class="ml-2 text-xs bg-red-100 text-red-800 px-2 py-1 rounded">Mandatory</span>' : ''}
                                 ${attr.isManualEntry ? '<span class="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Manual Entry</span>' : ''}
+                                ${attr.isSizeAttribute ? '<span class="ml-2 text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">📏 Size</span>' : ''}
                                 <div class="text-sm text-gray-600">
                                     ${attr.isManualEntry ? 
                                         '<span class="text-blue-600 font-semibold">[Manual Entry Field]</span> - Users will input values freely' : 
@@ -4095,7 +4115,8 @@ function removeAttribute(entryIndex, attrIndex) {
                         attribute_name: attr.name,
                         standard_values: attr.standardValues,
                         is_mandatory: attr.isMandatory,
-                        is_manual_entry: attr.isManualEntry
+                        is_manual_entry: attr.isManualEntry,
+                        is_size_attribute: attr.isSizeAttribute || false
                     });
             }
 
@@ -4194,7 +4215,8 @@ function removeAttribute(entryIndex, attrIndex) {
                             attribute_name: attr.name,
                             standard_values: attr.standardValues,
                             is_mandatory: attr.isMandatory,
-                            is_manual_entry: attr.isManualEntry
+                            is_manual_entry: attr.isManualEntry,
+                            is_size_attribute: attr.isSizeAttribute || false
                         });
                     
                     if (attrError) {
@@ -5373,6 +5395,7 @@ function displayEditModalAttributes(attributes) {
                         <div class="font-medium">${attr.attribute_name}</div>
                         ${attr.is_mandatory ? '<span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">Mandatory</span>' : ''}
                         ${attr.is_manual_entry ? '<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Manual Entry</span>' : ''}
+                        ${attr.is_size_attribute ? '<span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">📏 Size</span>' : ''}
                         ${deprecatedCount > 0 ? '<span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">Has Deprecated</span>' : ''}
                     </div>
                     <div class="text-sm text-gray-600 mt-1">
@@ -5624,6 +5647,7 @@ function editProjectAttribute(index) {
     document.getElementById('edit-attr-name').value = attr.attribute_name;
     document.getElementById('edit-mandatory-checkbox').checked = attr.is_mandatory;
     document.getElementById('edit-manual-entry-checkbox').checked = attr.is_manual_entry || false;
+    document.getElementById('edit-size-attribute-checkbox').checked = attr.is_size_attribute || false;
     
     const editValuesContainer = document.getElementById('edit-values-container');
     editValuesContainer.innerHTML = '';
@@ -7796,6 +7820,10 @@ function loadEditModalAttributesDisplay(attributes) {
                         <input type="checkbox" ${attr.is_manual_entry ? 'checked' : ''} class="edit-attr-manual mr-1">
                         <span class="text-sm">Manual Entry</span>
                     </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" ${attr.is_size_attribute ? 'checked' : ''} class="edit-size-attribute-checkbox mr-1">
+                        <span class="text-sm">📏 Size</span>
+                    </label>
                 </div>
                 <div class="edit-standard-values">
                     ${generateEditStandardValuesHTML(attr.standard_values || [])}
@@ -8091,6 +8119,7 @@ function displayViewAttributes(attributes) {
                         <div class="font-medium text-gray-900">${attr.attribute_name}</div>
                         ${attr.is_mandatory ? '<span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">Mandatory</span>' : '<span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">Optional</span>'}
                         ${attr.is_manual_entry ? '<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Manual Entry</span>' : '<span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Predefined Values</span>'}
+                        ${attr.is_size_attribute ? '<span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">📏 Size</span>' : ''}
                     </div>
                 </div>
                 <div>
@@ -9921,11 +9950,13 @@ function collectAttributesFromEditModal() {
                 
                 const mandatoryInput = attrDiv.querySelector('.edit-attr-mandatory');
                 const manualEntryInput = attrDiv.querySelector('.edit-attr-manual');
+                const sizeAttributeInput = attrDiv.querySelector('.edit-size-attribute-checkbox');
                 
                 const isMandatory = mandatoryInput ? mandatoryInput.checked : false;
                 const isManualEntry = manualEntryInput ? manualEntryInput.checked : false;
+                const isSizeAttribute = sizeAttributeInput ? sizeAttributeInput.checked : false;
                 
-                console.log(`ATTRIBUTE DEBUG ${index}: mandatory=${isMandatory}, manual=${isManualEntry}, values=${standardValues.length}`);
+                console.log(`ATTRIBUTE DEBUG ${index}: mandatory=${isMandatory}, manual=${isManualEntry}, size=${isSizeAttribute}, values=${standardValues.length}`);
                 
                 // Only add attribute if it has valid data
                 if (name && (standardValues.length > 0 || isManualEntry)) {
@@ -9933,7 +9964,8 @@ function collectAttributesFromEditModal() {
                         attribute_name: name,
                         standard_values: standardValues,
                         is_mandatory: isMandatory,
-                        is_manual_entry: isManualEntry
+                        is_manual_entry: isManualEntry,
+                        is_size_attribute: isSizeAttribute || false
                     };
                     
                     attributes.push(attributeData);
