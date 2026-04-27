@@ -1188,6 +1188,132 @@ var supabase = window.supabaseClient;
             }
         }
 
+        // ========================================
+        // WELCOME EMAIL FOR NEW USERS
+        // ========================================
+        function buildWelcomeEmailBody(username, email, password, role) {
+            const roleLabel = {
+                'admin': 'Administrator',
+                'creator': 'Creator',
+                'reviewer': 'Reviewer',
+                'erp_data_entry': 'ERP Data Entry',
+                'site_team': 'Site Team',
+                'store_supervisor': 'Store Supervisor'
+            }[role] || role;
+
+            const baseStyle = 'font-family:Inter,Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;';
+            return `<div style="${baseStyle}">
+<div style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:32px 24px;text-align:center;">
+<h1 style="color:#ffffff;margin:0;font-size:24px;font-weight:700;">PRISM</h1>
+<p style="color:rgba(255,255,255,0.85);margin:8px 0 0 0;font-size:14px;">Procurement Resource &amp; Item Specification Management</p>
+</div>
+<div style="padding:32px 24px;">
+<h2 style="color:#059669;font-size:20px;margin:0 0 16px 0;">&#x1F44B; Welcome to PRISM!</h2>
+<p style="color:#4b5563;font-size:16px;line-height:24px;margin:0 0 24px 0;">Hello <strong>${username}</strong>,</p>
+<p style="color:#4b5563;font-size:16px;line-height:24px;margin:0 0 24px 0;">Your PRISM account has been created. Below are your login credentials and the portals available to you.</p>
+
+<h3 style="color:#374151;font-size:16px;margin:0 0 12px 0;">&#x1F511; Your Credentials</h3>
+<table style="width:100%;border-collapse:collapse;margin:0 0 28px 0;">
+<tr><td style="padding:12px;background-color:#f9fafb;border:1px solid #e5e7eb;font-weight:600;color:#374151;width:40%;">Username:</td><td style="padding:12px;background-color:#ffffff;border:1px solid #e5e7eb;color:#1f2937;font-family:monospace;">${username}</td></tr>
+<tr><td style="padding:12px;background-color:#f9fafb;border:1px solid #e5e7eb;font-weight:600;color:#374151;">Email:</td><td style="padding:12px;background-color:#ffffff;border:1px solid #e5e7eb;color:#1f2937;font-family:monospace;">${email}</td></tr>
+<tr><td style="padding:12px;background-color:#f9fafb;border:1px solid #e5e7eb;font-weight:600;color:#374151;">Password:</td><td style="padding:12px;background-color:#ffffff;border:1px solid #e5e7eb;color:#1f2937;font-family:monospace;">${password}</td></tr>
+<tr><td style="padding:12px;background-color:#f9fafb;border:1px solid #e5e7eb;font-weight:600;color:#374151;">Role:</td><td style="padding:12px;background-color:#dbeafe;border:1px solid #93c5fd;color:#1e40af;font-weight:600;">${roleLabel}</td></tr>
+</table>
+
+<h3 style="color:#374151;font-size:16px;margin:0 0 12px 0;">&#x1F310; PRISM Portals</h3>
+<table style="width:100%;border-collapse:collapse;margin:0 0 28px 0;">
+<tr style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);">
+  <td colspan="2" style="padding:12px 16px;color:#ffffff;font-weight:700;font-size:15px;">&#x1F4CB; CSI Attributes Creation Portal</td>
+</tr>
+<tr>
+  <td style="padding:10px 16px;background-color:#f5f3ff;border:1px solid #e5e7eb;color:#4b5563;font-size:14px;" colspan="2">
+    Manage classification projects, define attributes and standard values, and submit projects for approval.<br>
+    <a href="https://csi-attribute-portal.netlify.app/" style="color:#7c3aed;font-weight:600;word-break:break-all;">https://csi-attribute-portal.netlify.app/</a>
+  </td>
+</tr>
+<tr style="background:linear-gradient(135deg,#0ea5e9 0%,#0284c7 100%);">
+  <td colspan="2" style="padding:12px 16px;color:#ffffff;font-weight:700;font-size:15px;">&#x1F9EE; Code Generation Portal</td>
+</tr>
+<tr>
+  <td style="padding:10px 16px;background-color:#f0f9ff;border:1px solid #e5e7eb;color:#4b5563;font-size:14px;" colspan="2">
+    Generate CSI item codes, handle variations, search existing codes, and manage ERP integration.<br>
+    <a href="https://csi-item-code-portal.netlify.app/" style="color:#0369a1;font-weight:600;word-break:break-all;">https://csi-item-code-portal.netlify.app/</a>
+  </td>
+</tr>
+<tr style="background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);">
+  <td colspan="2" style="padding:12px 16px;color:#ffffff;font-weight:700;font-size:15px;">&#x2705; Approval Portal</td>
+</tr>
+<tr>
+  <td style="padding:10px 16px;background-color:#fffbeb;border:1px solid #e5e7eb;color:#4b5563;font-size:14px;" colspan="2">
+    Review and approve or reject item code requests, classification projects, and standard value requests.<br>
+    <a href="https://csi-approval-portal.netlify.app/" style="color:#b45309;font-weight:600;word-break:break-all;">https://csi-approval-portal.netlify.app/</a>
+  </td>
+</tr>
+</table>
+
+<div style="background-color:#fef3c7;border-left:4px solid #f59e0b;padding:16px;margin:0 0 24px 0;border-radius:4px;">
+<p style="margin:0;color:#92400e;font-weight:600;">&#x26A0; Security Notice</p>
+<p style="margin:8px 0 0 0;color:#78350f;">Please keep your credentials confidential and do not share them with others.</p>
+</div>
+</div>
+<div style="background:#f9fafb;padding:16px 24px;text-align:center;border-top:1px solid #e5e7eb;">
+<p style="margin:0;color:#9ca3af;font-size:12px;">This is an automated notification from the PRISM system. Please do not reply to this email.</p>
+</div>
+</div>`;
+        }
+
+        async function sendWelcomeEmail(newUser, plainPassword) {
+            try {
+                console.log('Sending welcome email to new user:', newUser.email);
+                const subject = '[PRISM] Welcome - Your Account Has Been Created';
+                const body = buildWelcomeEmailBody(newUser.username, newUser.email, plainPassword, newUser.role);
+
+                // Insert notification record
+                const { data: notifData, error: notifError } = await supabase
+                    .from('email_notifications')
+                    .insert({
+                        to_email: newUser.email,
+                        subject: subject,
+                        body: body,
+                        notification_type: 'welcome_new_user',
+                        recipient_user_id: newUser.id,
+                        request_type: 'user_management',
+                        request_id: null,
+                        status: 'pending'
+                    })
+                    .select('id')
+                    .single();
+
+                if (notifError || !notifData) {
+                    console.error('Failed to insert welcome email notification record:', notifError);
+                    return false;
+                }
+
+                // Send via Edge Function
+                const response = await fetch(EMAIL_EDGE_FUNCTION_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        notificationId: notifData.id,
+                        to: newUser.email,
+                        subject: subject,
+                        htmlBody: body
+                    })
+                });
+
+                if (!response.ok) {
+                    console.error('Edge function error sending welcome email:', response.status);
+                    return false;
+                }
+
+                console.log('Welcome email sent successfully to:', newUser.email);
+                return true;
+            } catch (error) {
+                console.error('Error sending welcome email:', error);
+                return false;
+            }
+        }
+
         // Global state
         // Session persistence and authentication
         async function checkAuthentication() {
@@ -1653,11 +1779,6 @@ function toggleStandardValuesSection() {
                 <select class="attribute-value-unit-select w-32 px-3 py-2 text-base border-gray-300 rounded-md shadow-sm">
                     <option value="">UOM</option>
                 </select>
-                <select class="value-status-select w-20 px-2 py-2 text-xs border-gray-300 rounded-md shadow-sm" onchange="handleStatusChange(this)">
-                    <option value="active">Active</option>
-                    <option value="deprecated">Deprecated</option>
-                </select>
-                <span class="usage-count text-xs text-gray-600 px-2 py-1 rounded" title="Number of approved items using this value">Used: 0</span>
                 <button class="remove-value-btn px-2 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm hidden" onclick="removeStandardValue(this)">Remove</button>
             </div>
         `;
@@ -8423,11 +8544,6 @@ document.getElementById('manual-entry-checkbox').addEventListener('change', func
                 <select class="attribute-value-unit-select w-32 px-3 py-2 text-base border-gray-300 rounded-md shadow-sm">
                     <option value="">UOM</option>
                 </select>
-                <select class="value-status-select w-20 px-2 py-2 text-xs border-gray-300 rounded-md shadow-sm" onchange="handleStatusChange(this)">
-                    <option value="active">Active</option>
-                    <option value="deprecated">Deprecated</option>
-                </select>
-                <span class="usage-count text-xs text-gray-600 px-2 py-1 rounded" title="Number of approved items using this value">Used: 0</span>
                 <button class="remove-value-btn px-2 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm hidden" onclick="removeStandardValue(this)">Remove</button>
             </div>
         `;
@@ -8677,6 +8793,14 @@ function initializeCreateUserFunctionality() {
                 }
                 
                 showMessageBox('User created successfully!');
+                
+                // Send welcome email with credentials and portal links
+                try {
+                    await sendWelcomeEmail(data, password);
+                    console.log('Welcome email dispatched for new user:', data.email);
+                } catch (emailError) {
+                    console.error('Failed to send welcome email (user still created):', emailError);
+                }
                 
                 // Clear form
                 createUserForm.reset();
