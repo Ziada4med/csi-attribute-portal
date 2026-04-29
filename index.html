@@ -1332,6 +1332,20 @@ var supabase = window.supabaseClient;
                     
                     if (!error && user) {
                         currentUser = user;
+
+                        // Block store_supervisor from this portal
+                        if (currentUser.role === 'store_supervisor') {
+                            localStorage.removeItem('currentUser');
+                            const loginModal = document.getElementById('login-modal');
+                            if (loginModal) showModal(loginModal);
+                            const loginError = document.getElementById('login-error');
+                            if (loginError) {
+                                loginError.textContent = 'Access Denied: Store Supervisors are not permitted to access the Attributes Portal.';
+                                loginError.classList.remove('hidden');
+                            }
+                            return false;
+                        }
+
                         console.log('User restored from session:', currentUser);
                         
                         // Hide login modal and show main content
@@ -2873,6 +2887,14 @@ async function getItemDescription(itemCode) {
 
                 if (data && data.success) {
                     currentUser = data.user;
+
+                    // Block store_supervisor from this portal
+                    if (currentUser.role === 'store_supervisor') {
+                        const loginError = document.getElementById('login-error');
+                        loginError.textContent = 'Access Denied: Store Supervisors are not permitted to access the Attributes Portal.';
+                        loginError.classList.remove('hidden');
+                        return;
+                    }
                     
                     // Store user in localStorage for session persistence
                     localStorage.setItem('currentUser', JSON.stringify(currentUser));
